@@ -56,6 +56,24 @@ export class AppService implements OnModuleInit {
     return { success: true, message: 'User registered successfully', userId: user.id };
   }
 
+  private async generateTokens(user: any) {
+    const payload = { email: user.email, sub: user.id, role: user.role };
+    const token = this.jwtService.sign(payload);
+    
+    const refreshToken = this.jwtService.sign(payload, { 
+      secret: process.env.JWT_REFRESH_SECRET || 'super-secret-refresh-key',
+      expiresIn: '7d' 
+    });
+
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.prisma.userCredentials.update({
+      where: { id: user.id },
+      data: { hashedRefreshToken },
+    });
+
+    return { token, refreshToken };
+  }
+
   async login(data: any) {
     const { email, password } = data;
     const user = await this.prisma.userCredentials.findUnique({
@@ -63,17 +81,34 @@ export class AppService implements OnModuleInit {
     });
 
     if (!user) {
-      return { success: false, token: '', message: 'Invalid credentials' };
+      return { success: false, token: '', refreshToken: '', message: 'Invalid credentials' };
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      return { success: false, token: '', message: 'Invalid credentials' };
+      return { success: false, token: '', refreshToken: '', message: 'Invalid credentials' };
     }
 
-    const payload = { email: user.email, sub: user.id, role: user.role };
-    const token = this.jwtService.sign(payload);
+    const tokens = await this.generateTokens(user);
 
-    return { success: true, token, message: 'Login successful' };
+    return { success: true, token: tokens.token, refreshToken: tokens.refreshToken, message: 'Login successful' };
+  }
+
+  async refreshToken(data: { userId: string, refreshToken: string }) {
+    const user = await this.prisma.userCredentials.findUnique({
+      where: { id: data.userId },
+    });
+
+    if (!user || !user.hashedRefreshToken) {
+      return { success: false, token: '', refreshToken: '', message: 'Access Denied' };
+    }
+
+    const isRefreshTokenValid = await bcrypt.compare(data.refreshToken, user.hashedRefreshToken);
+    if (!isRefreshTokenValid) {
+      return { success: false, token: '', refreshToken: '', message: 'Access Denied' };
+    }
+
+    const tokens = await this.generateTokens(user);
+    return { success: true, token: tokens.token, refreshToken: tokens.refreshToken, message: 'Token refreshed' };
   }
 }

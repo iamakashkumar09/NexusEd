@@ -15,4 +15,9 @@ export class AppController {
   async login(data: any) {
     return this.appService.login(data);
   }
+
+  @GrpcMethod('AuthService', 'RefreshToken')
+  async refreshToken(data: { userId: string, refreshToken: string }) {
+    return this.appService.refreshToken(data);
+  }
 }

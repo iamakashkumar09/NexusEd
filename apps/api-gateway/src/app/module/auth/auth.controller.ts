@@ -1,15 +1,16 @@
-import { Controller, Post, Body, Inject, OnModuleInit, UseGuards, Get, Request } from '@nestjs/common';
+import { Controller, Post, Body, Inject, OnModuleInit, UseGuards, Get, Request, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ClientGrpc } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 interface AuthService {
-  Register(data: any): any;
-  Login(data: any): any;
-  RefreshToken(data: any): any;
+  Register(data: any): Observable<any>;
+  Login(data: any): Observable<any>;
+  RefreshToken(data: any): Observable<any>;
 }
 
 @Controller('auth')
@@ -28,13 +29,25 @@ export class AuthController implements OnModuleInit {
   }
 
   @Post('login')
-  async login(@Body() body: LoginDto) {
-    return await lastValueFrom(this.authService.Login(body));
+  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const response = await lastValueFrom(this.authService.Login(body));
+    if (response.success && response.token) {
+      res.cookie('token', response.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+      res.cookie('refreshToken', response.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    }
+    const { token, refreshToken, ...responseData } = response;
+    return responseData;
   }
 
   @Post('refresh')
-  async refresh(@Body() body: RefreshTokenDto) {
-    return await lastValueFrom(this.authService.RefreshToken(body));
+  async refresh(@Body() body: RefreshTokenDto, @Res({ passthrough: true }) res: Response) {
+    const response = await lastValueFrom(this.authService.RefreshToken(body));
+    if (response.success && response.token) {
+      res.cookie('token', response.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+      res.cookie('refreshToken', response.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    }
+    const { token, refreshToken, ...responseData } = response;
+    return responseData;
   }
 
   @UseGuards(JwtAuthGuard)

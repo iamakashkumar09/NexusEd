@@ -10,7 +10,7 @@ The platform combines traditional e-learning capabilities such as users, courses
 
 ## 🚀 Highlights
 
-- **Microservices architecture** using NestJS, FastAPI, and Java
+- **Microservices architecture** using NestJS and FastAPI
 - **API Gateway** exposing REST/JSON APIs to web and mobile clients
 - **gRPC** for synchronous communication between the API Gateway and backend services
 - **RabbitMQ/Kafka** for asynchronous event-driven communication

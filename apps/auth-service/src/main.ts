@@ -7,6 +7,11 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+import * as dotenv from 'dotenv';
+
+// Load .env from source directory
+dotenv.config({ path: join(__dirname, '../../../apps/auth-service/.env') });
+
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {

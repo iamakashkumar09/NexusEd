@@ -7,7 +7,7 @@ import { lastValueFrom } from 'rxjs';
 
 interface UserService {
   GetProfile(data: { userId: string }): any;
-  UpdateProfile(data: { userId: string; firstName: string; lastName: string; role: string }): any;
+  UpdateProfile(data: { userId: string; email: string; firstName: string; lastName: string; role: string }): any;
 }
 
 @Injectable()
@@ -25,7 +25,7 @@ export class AppService implements OnModuleInit {
   }
 
   async register(data: any) {
-    const { email, password, role } = data;
+    const { email, password, role, firstName = '', lastName = '' } = data;
     const userExists = await this.prisma.userCredentials.findUnique({
       where: { email },
     });
@@ -39,14 +39,14 @@ export class AppService implements OnModuleInit {
       data: { email, passwordHash, role: role || 'student' },
     });
 
-    // Make synchronous gRPC call to user-service to create the profile
-    // Note: Since user-service is not yet fully implemented, this might fail, but it's the intended architecture
+    // Create profile in user-service with actual name and email from registration
     try {
       await lastValueFrom(
         this.userService.UpdateProfile({
           userId: user.id,
-          firstName: '',
-          lastName: '',
+          email,
+          firstName,
+          lastName,
           role: user.role,
         })
       );

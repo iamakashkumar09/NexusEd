@@ -8,6 +8,10 @@ export class AppService {
   async getProfile(data: { userId: string }) {
     const profile = await this.prisma.userProfile.findUnique({
       where: { userId: data.userId },
+      include: {
+        studentProfile: true,
+        instructorProfile: true,
+      }
     });
     
     if (!profile) {
@@ -25,11 +29,35 @@ export class AppService {
       firstName: profile.firstName,
       lastName: profile.lastName,
       email: profile.email || '',
-      role: profile.role || ''
+      role: profile.role || '',
+      
+      // Student specific fields
+      bio: profile.studentProfile?.bio,
+      learningGoals: profile.studentProfile?.learningGoals,
+      interests: profile.studentProfile?.interests,
+
+      // Instructor specific fields
+      headline: profile.instructorProfile?.headline,
+      biography: profile.instructorProfile?.biography,
+      website: profile.instructorProfile?.website,
+      socialLinks: profile.instructorProfile?.socialLinks,
     };
   }
 
-  async updateProfile(data: { userId: string; firstName: string; lastName: string; role?: string }) {
+  async updateProfile(data: { 
+    userId: string; 
+    email?: string;
+    firstName: string; 
+    lastName: string; 
+    role?: string;
+    bio?: string;
+    learningGoals?: string;
+    interests?: string;
+    headline?: string;
+    biography?: string;
+    website?: string;
+    socialLinks?: string;
+  }) {
     try {
       const userRole = data.role || 'student';
 
@@ -38,16 +66,64 @@ export class AppService {
         update: {
           firstName: data.firstName,
           lastName: data.lastName,
+          ...(data.email ? { email: data.email } : {}),
           role: userRole,
+          ...(userRole === 'STUDENT' || userRole === 'student' ? {
+            studentProfile: {
+              upsert: {
+                create: {
+                  bio: data.bio,
+                  learningGoals: data.learningGoals,
+                  interests: data.interests
+                },
+                update: {
+                  bio: data.bio,
+                  learningGoals: data.learningGoals,
+                  interests: data.interests
+                }
+              }
+            }
+          } : {}),
+          ...(userRole === 'INSTRUCTOR' || userRole === 'instructor' ? {
+            instructorProfile: {
+              upsert: {
+                create: {
+                  headline: data.headline,
+                  biography: data.biography,
+                  website: data.website,
+                  socialLinks: data.socialLinks
+                },
+                update: {
+                  headline: data.headline,
+                  biography: data.biography,
+                  website: data.website,
+                  socialLinks: data.socialLinks
+                }
+              }
+            }
+          } : {})
         },
         create: {
           userId: data.userId,
           firstName: data.firstName,
           lastName: data.lastName,
-          email: '', // Email might be synced later or not needed
+          email: data.email || '',
           role: userRole,
-          studentProfile: userRole === 'student' ? { create: {} } : undefined,
-          instructorProfile: userRole === 'instructor' ? { create: {} } : undefined,
+          studentProfile: (userRole === 'STUDENT' || userRole === 'student') ? { 
+            create: {
+              bio: data.bio,
+              learningGoals: data.learningGoals,
+              interests: data.interests
+            } 
+          } : undefined,
+          instructorProfile: (userRole === 'INSTRUCTOR' || userRole === 'instructor') ? { 
+            create: {
+              headline: data.headline,
+              biography: data.biography,
+              website: data.website,
+              socialLinks: data.socialLinks
+            } 
+          } : undefined,
         },
       });
 

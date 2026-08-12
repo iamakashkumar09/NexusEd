@@ -23,6 +23,7 @@ message UpdateProfileRequest {
   string userId = 1;
   string firstName = 2;
   string lastName = 3;
+  string role = 4;
 }
 
 message UpdateProfileResponse {

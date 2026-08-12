@@ -7,7 +7,7 @@ import { lastValueFrom } from 'rxjs';
 
 interface UserService {
   GetProfile(data: { userId: string }): any;
-  UpdateProfile(data: { userId: string; firstName: string; lastName: string }): any;
+  UpdateProfile(data: { userId: string; firstName: string; lastName: string; role: string }): any;
 }
 
 @Injectable()
@@ -47,6 +47,7 @@ export class AppService implements OnModuleInit {
           userId: user.id,
           firstName: '',
           lastName: '',
+          role: user.role,
         })
       );
     } catch (e) {

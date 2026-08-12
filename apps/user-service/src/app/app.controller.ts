@@ -1,12 +1,18 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getData() {
-    return this.appService.getData();
+  @GrpcMethod('UserService', 'GetProfile')
+  async getProfile(data: { userId: string }) {
+    return this.appService.getProfile(data);
+  }
+
+  @GrpcMethod('UserService', 'UpdateProfile')
+  async updateProfile(data: { userId: string; firstName: string; lastName: string; role: string }) {
+    return this.appService.updateProfile(data);
   }
 }

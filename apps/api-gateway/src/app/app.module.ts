@@ -7,9 +7,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthController } from './module/auth/auth.controller';
 import { JwtStrategy } from './module/auth/strategies/jwt.strategy';
+import { UserModule } from './module/user/user.module';
 
 @Module({
   imports: [
+    UserModule,
     PassportModule,
     ClientsModule.register([
       {

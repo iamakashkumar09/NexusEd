@@ -12,7 +12,7 @@ export class AppController {
   }
 
   @GrpcMethod('UserService', 'UpdateProfile')
-  async updateProfile(data: { userId: string; firstName: string; lastName: string; role: string }) {
+  async updateProfile(data: any) {
     return this.appService.updateProfile(data);
   }
 }

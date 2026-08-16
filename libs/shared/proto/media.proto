@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package media;
+
+service MediaService {
+  rpc GetUploadUrl (GetUploadUrlRequest) returns (GetUploadUrlResponse) {}
+}
+
+message GetUploadUrlRequest {
+  string filename = 1;
+  string contentType = 2;
+  int64 fileSize = 3;
+}
+
+message GetUploadUrlResponse {
+  string uploadUrl = 1; // The Resumable Upload URL to directly send the video to
+  string mediaId = 2;   // Local DB reference if needed
+}

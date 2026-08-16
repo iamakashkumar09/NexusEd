@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma/runtime"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  instructorId String
+  title        String
+  subtitle     String?
+  category     String?
+  level        String?
+  language     String?
+  description  String?
+  thumbnailUrl String?
+  price        Float?   @default(0.0)
+  status       String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sections Section[]
+
+  @@map("courses")
+}
+
+model Section {
+  id        String   @id @default(uuid())
+  courseId  String
+  title     String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course   Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lectures Lecture[]
+
+  @@map("sections")
+}
+
+model Lecture {
+  id            String   @id @default(uuid())
+  sectionId     String
+  title         String
+  videoUrl      String? // YouTube URL or Video ID
+  videoDuration Int? // in seconds
+  order         Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@map("lectures")
+}

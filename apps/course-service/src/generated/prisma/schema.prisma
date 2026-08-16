@@ -1,0 +1,89 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  instructorId String
+  title        String
+  subtitle     String?
+  category     String?
+  level        String?
+  language     String?
+  description  String?
+  thumbnailUrl String?
+  price        Float?   @default(0.0)
+  status       String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sections    Section[]
+  enrollments Enrollment[]
+
+  @@map("courses")
+}
+
+model Section {
+  id        String   @id @default(uuid())
+  courseId  String
+  title     String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course   Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lectures Lecture[]
+
+  @@map("sections")
+}
+
+model Lecture {
+  id            String   @id @default(uuid())
+  sectionId     String
+  title         String
+  videoUrl      String? // YouTube URL or Video ID
+  videoDuration Int? // in seconds
+  order         Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  section  Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  progress LectureProgress[]
+
+  @@map("lectures")
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  progress  Float    @default(0.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+model LectureProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  lectureId String
+  courseId  String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lecture Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lectureId])
+  @@map("lecture_progress")
+}

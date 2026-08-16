@@ -10,6 +10,7 @@ interface Lecture {
   title: string;
   videoFile: File | null;
   videoName: string;
+  videoUrl?: string;
   duration: string;
   type: 'video' | 'article';
 }
@@ -259,8 +260,8 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
     setForm({ ...form, sections: form.sections.map(s => s.id === sectionId ? { ...s, lectures: s.lectures.filter(l => l.id !== lectureId) } : s) });
   };
 
-  const handleVideoUpload = (sectionId: string, lectureId: string, file: File) => {
-    updateLecture(sectionId, lectureId, { videoFile: file, videoName: file.name });
+  const handleVideoUpload = (sectionId: string, lectureId: string, file: File, videoUrl?: string) => {
+    updateLecture(sectionId, lectureId, { videoFile: file, videoName: file.name, videoUrl });
   };
 
   return (
@@ -319,7 +320,7 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
                   {/* Video upload zone */}
                   <VideoUploadZone
                     fileName={lecture.videoName}
-                    onFileSelect={(file) => handleVideoUpload(section.id, lecture.id, file)}
+                    onFileSelect={(file, videoUrl) => handleVideoUpload(section.id, lecture.id, file, videoUrl)}
                   />
                 </div>
               ))}
@@ -347,7 +348,7 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
   );
 }
 
-function VideoUploadZone({ fileName, onFileSelect }: { fileName: string; onFileSelect: (f: File) => void }) {
+function VideoUploadZone({ fileName, onFileSelect }: { fileName: string; onFileSelect: (f: File, videoUrl?: string) => void }) {
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -357,12 +358,69 @@ function VideoUploadZone({ fileName, onFileSelect }: { fileName: string; onFileS
     if (!file.type.startsWith('video/')) return;
     setUploading(true);
     setUploadProgress(0);
-    let p = 0;
-    const timer = setInterval(() => {
-      p += Math.random() * 18 + 5;
-      if (p >= 100) { p = 100; clearInterval(timer); setUploading(false); onFileSelect(file); }
-      setUploadProgress(Math.min(p, 100));
-    }, 150);
+
+    // 1. Get Resumable Upload URL from our backend
+    fetch('/api/media/upload-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: file.name,
+        contentType: file.type,
+        fileSize: file.size,
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to get upload URL. Are you logged in?');
+      return res.json();
+    })
+    .then(data => {
+      if (!data.uploadUrl || data.uploadUrl === '') {
+        throw new Error(data.mediaId || 'No upload URL returned (check media-service logs)');
+      }
+
+      // 2. Upload video directly to YouTube Resumable URL using XHR for progress tracking
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress((e.loaded / e.total) * 100);
+        }
+      });
+      
+      xhr.addEventListener('load', () => {
+        setUploading(false);
+        if (xhr.status === 200 || xhr.status === 201) {
+          // Upload successful
+          try {
+            const ytResponse = JSON.parse(xhr.responseText);
+            const videoId = ytResponse.id;
+            const videoUrl = videoId ? `https://youtube.com/watch?v=${videoId}` : '';
+            onFileSelect(file, videoUrl);
+          } catch (e) {
+            console.error('Failed to parse YouTube response', e);
+            onFileSelect(file, '');
+          }
+        } else {
+          alert('Upload failed with status ' + xhr.status);
+        }
+      });
+      
+      xhr.addEventListener('error', () => {
+        setUploading(false);
+        alert('Network error during upload');
+      });
+      
+      xhr.open('PUT', data.uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    })
+    .catch(err => {
+      setUploading(false);
+      alert(err.message);
+    });
+
   }, [onFileSelect]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -599,11 +657,44 @@ export default function CreateCoursePage() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    // Stubbed — logs to console until course-service backend is built
-    await new Promise(r => setTimeout(r, 2000));
-    console.log('Course submitted (stub):', form);
-    setSubmitting(false);
-    setSubmitted(true);
+    try {
+      const response = await fetch('/api/courses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: form.title,
+          subtitle: form.subtitle,
+          category: form.category,
+          level: form.level,
+          language: form.language,
+          description: form.description,
+          thumbnailUrl: form.thumbnail,
+          status: 'PUBLISHED',
+          sections: form.sections.map((section, sIndex) => ({
+            title: section.title,
+            order: sIndex + 1,
+            lectures: section.lectures.map((lecture, lIndex) => ({
+              title: lecture.title,
+              videoUrl: lecture.videoUrl, // This is the YouTube URL from the upload step
+              order: lIndex + 1,
+            }))
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create course');
+      }
+
+      setSubmitting(false);
+      setSubmitted(true);
+      localStorage.removeItem('course_draft');
+    } catch (error: any) {
+      setSubmitting(false);
+      alert(error.message);
+    }
   };
 
   if (submitted) {

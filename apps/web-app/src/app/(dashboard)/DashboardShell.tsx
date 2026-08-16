@@ -92,9 +92,23 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
           flexShrink: 0,
         }}>
           {!collapsed && (
-            <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.04em', whiteSpace: 'nowrap' }}>
-              NexusEd
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                background: 'linear-gradient(135deg, #5e6ad2 0%, #828fff 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(94,106,210,0.4)',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                  <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+                  <line x1="12" y1="2" x2="12" y2="22"/>
+                  <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+                </svg>
+              </div>
+              <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.05em', whiteSpace: 'nowrap' }}>
+                NexusEd
+              </span>
+            </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -205,16 +219,16 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
 
         {/* ─── Top Bar ─────────────────────────────────────────────── */}
         <header style={{
-          height: 64,
+          height: 56,
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 24px',
           borderBottom: '1px solid var(--hairline)',
-          background: 'rgba(1,1,2,0.8)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           position: 'sticky',
           top: 0,
           zIndex: 50,

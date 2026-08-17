@@ -125,6 +125,7 @@ function useYouTubePlayer(videoId: string | null, containerId: string, onEnded?:
   const [volume, setVolume] = useState(80);
   const [muted, setMuted] = useState(false);
   const [playbackRate, setPlaybackRateState] = useState(1);
+  const [quality, setQualityState] = useState('auto');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onEndedRef = useRef(onEnded);
 
@@ -263,21 +264,30 @@ function useYouTubePlayer(videoId: string | null, containerId: string, onEnded?:
     setPlaybackRateState(rate);
   }, []);
 
-  return { ready, playing, currentTime, duration, volume, muted, togglePlay, seekTo, setVol, toggleMute, requestFullscreen, playbackRate, setPlaybackRate };
+  const setPlaybackQuality = useCallback((q: string) => {
+    if (!playerRef.current) return;
+    if (typeof playerRef.current.setPlaybackQuality === 'function') {
+      playerRef.current.setPlaybackQuality(q);
+    }
+    setQualityState(q);
+  }, []);
+
+  return { ready, playing, currentTime, duration, volume, muted, togglePlay, seekTo, setVol, toggleMute, requestFullscreen, playbackRate, setPlaybackRate, quality, setPlaybackQuality };
 }
 
 
 // ─── Custom Control Bar ───────────────────────────────────────────────────────
 
 function ControlBar({
-  playing, currentTime, duration, volume, muted, playbackRate,
-  onTogglePlay, onSeek, onVolumeChange, onToggleMute, onFullscreen, onPlaybackRateChange,
+  playing, currentTime, duration, volume, muted, playbackRate, quality,
+  onTogglePlay, onSeek, onVolumeChange, onToggleMute, onFullscreen, onPlaybackRateChange, onQualityChange,
   onPrev, onNext, hasPrev, hasNext,
 }: any) {
   const [hovering, setHovering] = useState(false);
   const [seekHover, setSeekHover] = useState(false);
   const [hoverPct, setHoverPct] = useState(0);
   const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
+  const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleSeekMove = (e: React.MouseEvent) => {
@@ -378,17 +388,16 @@ function ControlBar({
 
         {/* Speed */}
         <div style={{ position: 'relative' }} onMouseLeave={() => setSpeedMenuOpen(false)}>
-          <button onClick={() => setSpeedMenuOpen(!speedMenuOpen)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '6px 12px', fontSize: 13, fontWeight: 700, minWidth: 44, opacity: 0.8 }}
+          <button onClick={() => { setSpeedMenuOpen(!speedMenuOpen); setQualityMenuOpen(false); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '6px 12px', fontSize: 13, fontWeight: 700, minWidth: 44, opacity: 0.8 }}
           onMouseEnter={e => e.currentTarget.style.opacity = '1'}
           onMouseLeave={e => e.currentTarget.style.opacity = '0.8'}
           >
             {playbackRate}x
           </button>
 
-          {/* Speed Menu */}
           {speedMenuOpen && (
             <div style={{
-              position: 'absolute', bottom: '100%', right: 0, marginBottom: 8,
+              position: 'absolute', bottom: '100%', right: 0,
               background: 'rgba(28,28,30,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
               borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column',
               border: '1px solid rgba(255,255,255,0.1)', minWidth: 80,
@@ -408,6 +417,52 @@ function ControlBar({
                   onMouseLeave={e => e.currentTarget.style.background = rate === playbackRate ? 'rgba(255,255,255,0.1)' : 'transparent'}
                 >
                   {rate}x
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Quality */}
+        <div style={{ position: 'relative' }} onMouseLeave={() => setQualityMenuOpen(false)}>
+          <button onClick={() => { setQualityMenuOpen(!qualityMenuOpen); setSpeedMenuOpen(false); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '6px 12px', fontSize: 13, fontWeight: 700, opacity: 0.8, display: 'flex', alignItems: 'center', gap: 4 }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '0.8'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+
+          {qualityMenuOpen && (
+            <div style={{
+              position: 'absolute', bottom: '100%', right: 0,
+              background: 'rgba(28,28,30,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+              border: '1px solid rgba(255,255,255,0.1)', minWidth: 120,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            }}>
+              <div style={{ padding: '8px 16px', fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Quality</div>
+              {[
+                { label: '1080p', value: 'hd1080' },
+                { label: '720p', value: 'hd720' },
+                { label: '480p', value: 'large' },
+                { label: '360p', value: 'medium' },
+                { label: 'Auto', value: 'auto' }
+              ].map(q => (
+                <button
+                  key={q.value}
+                  onClick={() => { if(onQualityChange) onQualityChange(q.value); setQualityMenuOpen(false); }}
+                  style={{
+                    background: quality === q.value ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    border: 'none', color: '#fff', padding: '10px 16px', fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', textAlign: 'left',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    transition: 'background 0.15s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                  onMouseLeave={e => e.currentTarget.style.background = quality === q.value ? 'rgba(255,255,255,0.1)' : 'transparent'}
+                >
+                  {quality === q.value ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg> : <div style={{width: 14, height: 14}} />}
+                  {q.label}
                 </button>
               ))}
             </div>
@@ -759,7 +814,7 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
   const {
     ready, playing, currentTime, duration, volume, muted,
     togglePlay, seekTo, setVol, toggleMute, requestFullscreen,
-    playbackRate, setPlaybackRate
+    playbackRate, setPlaybackRate, quality, setPlaybackQuality
   } = useYouTubePlayer(videoId, 'yt-player-frame', () => {
     if (activeLecture && !completed.has(activeLecture.id)) {
       toggleComplete(activeLecture.id, true);
@@ -862,12 +917,13 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
           {/* Video player */}
-          <div
-            id="course-player-wrapper"
-            style={{ position: 'relative', background: '#000', aspectRatio: '16/9', width: '100%', flexShrink: 0 }}
-            onMouseEnter={() => setPlayerHovered(true)}
-            onMouseLeave={() => setPlayerHovered(false)}
-          >
+          <div style={{ background: '#000', width: '100%', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+            <div
+              id="course-player-wrapper"
+              style={{ position: 'relative', background: '#000', aspectRatio: '16/9', width: '100%', maxWidth: 'calc(70vh * 16 / 9)', flexShrink: 0 }}
+              onMouseEnter={() => setPlayerHovered(true)}
+              onMouseLeave={() => setPlayerHovered(false)}
+            >
             {/* YouTube iframe target wrapper - disables all pointer events to the iframe */}
             <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
               <div id="yt-player-frame" style={{ width: '100%', height: '100%' }} />
@@ -907,10 +963,11 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
             {videoId && ready && (
               <ControlBar
                 playing={playing} currentTime={currentTime} duration={duration}
-                volume={volume} muted={muted} playbackRate={playbackRate}
+                volume={volume} muted={muted} playbackRate={playbackRate} quality={quality}
                 onTogglePlay={togglePlay} onSeek={seekTo}
                 onVolumeChange={setVol} onToggleMute={toggleMute}
                 onFullscreen={requestFullscreen} onPlaybackRateChange={setPlaybackRate}
+                onQualityChange={setPlaybackQuality}
                 onPrev={goPrev} onNext={goNext}
                 hasPrev={hasPrev} hasNext={hasNext}
               />
@@ -918,6 +975,7 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
 
             {/* Always-visible hover zone for control bar */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, zIndex: 9 }} />
+          </div>
           </div>
 
           {/* Lecture Nav bar */}

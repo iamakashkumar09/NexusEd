@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, Put, Req, UseGuards, Inject, OnModu
 import { ClientGrpc } from '@nestjs/microservices';
 import { AuthGuard } from '@nestjs/passport';
 import { firstValueFrom } from 'rxjs';
+import { UpdateProgressDto } from './dto/update-progress.dto';
 
 @Controller('courses')
 export class CourseController implements OnModuleInit {
@@ -78,7 +79,7 @@ export class CourseController implements OnModuleInit {
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/progress')
-  async updateProgress(@Req() req: any, @Param('id') courseId: string, @Body() body: { lectureId: string, completed: boolean }) {
+  async updateProgress(@Req() req: any, @Param('id') courseId: string, @Body() body: UpdateProgressDto) {
     const result = await firstValueFrom(this.courseService.updateLectureProgress({ 
       userId: req.user.userId, 
       courseId, 

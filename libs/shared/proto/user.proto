@@ -35,17 +35,18 @@ message UpdateProfileRequest {
   string firstName = 2;
   string lastName = 3;
   string role = 4;
+  optional string email = 5;
 
   // Student specific fields
-  optional string bio = 5;
-  optional string learningGoals = 6;
-  optional string interests = 7;
+  optional string bio = 6;
+  optional string learningGoals = 7;
+  optional string interests = 8;
 
   // Instructor specific fields
-  optional string headline = 8;
-  optional string biography = 9;
-  optional string website = 10;
-  optional string socialLinks = 11;
+  optional string headline = 9;
+  optional string biography = 10;
+  optional string website = 11;
+  optional string socialLinks = 12;
 }
 
 message UpdateProfileResponse {

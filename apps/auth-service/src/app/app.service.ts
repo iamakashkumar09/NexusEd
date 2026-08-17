@@ -18,14 +18,14 @@ export class AppService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     @Inject('USER_SERVICE') private readonly client: ClientGrpc,
-  ) {}
+  ) { }
 
   onModuleInit() {
     this.userService = this.client.getService<UserService>('UserService');
   }
 
   async register(data: any) {
-    const { email, password, role, firstName = '', lastName = '' } = data;
+    const { email, password, role, firstName, lastName } = data;
     const userExists = await this.prisma.userCredentials.findUnique({
       where: { email },
     });
@@ -34,9 +34,10 @@ export class AppService implements OnModuleInit {
       return { success: false, message: 'User already exists', userId: '' };
     }
 
+    const normalizedRole = (role || 'STUDENT').toString().toUpperCase();
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await this.prisma.userCredentials.create({
-      data: { email, passwordHash, role: role || 'student' },
+      data: { email, passwordHash, role: normalizedRole },
     });
 
     // Create profile in user-service with actual name and email from registration
@@ -47,7 +48,7 @@ export class AppService implements OnModuleInit {
           email,
           firstName,
           lastName,
-          role: user.role,
+          role: normalizedRole,
         })
       );
     } catch (e) {
@@ -60,10 +61,10 @@ export class AppService implements OnModuleInit {
   private async generateTokens(user: any) {
     const payload = { email: user.email, sub: user.id, role: user.role };
     const token = this.jwtService.sign(payload);
-    
-    const refreshToken = this.jwtService.sign(payload, { 
+
+    const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_SECRET || 'super-secret-refresh-key',
-      expiresIn: '7d' 
+      expiresIn: '7d'
     });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);

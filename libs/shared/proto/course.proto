@@ -1,0 +1,209 @@
+syntax = "proto3";
+
+package course;
+
+service CourseService {
+  rpc CreateCourse (CreateCourseRequest) returns (CourseResponse) {}
+  rpc UpdateCourse (UpdateCourseRequest) returns (CourseResponse) {}
+  rpc GetCourse (GetCourseRequest) returns (CourseResponse) {}
+  rpc GetInstructorCourses (GetInstructorCoursesRequest) returns (CourseListResponse) {}
+  rpc GetCatalogCourses (GetCatalogCoursesRequest) returns (CourseListResponse) {}
+  
+  // Sections
+  rpc CreateSection (CreateSectionRequest) returns (SectionResponse) {}
+  rpc UpdateSection (UpdateSectionRequest) returns (SectionResponse) {}
+  
+  // Lectures
+  rpc CreateLecture (CreateLectureRequest) returns (LectureResponse) {}
+  rpc UpdateLecture (UpdateLectureRequest) returns (LectureResponse) {}
+
+  // Student Actions
+  rpc EnrollCourse (EnrollCourseRequest) returns (EnrollCourseResponse) {}
+  rpc GetStudentCourses (GetStudentCoursesRequest) returns (CourseListResponse) {}
+  rpc UpdateLectureProgress (UpdateProgressRequest) returns (ProgressResponse) {}
+  rpc GetCourseProgress (GetProgressRequest) returns (ProgressResponse) {}
+  rpc GetStudentStats (GetStudentStatsRequest) returns (StudentStatsResponse) {}
+}
+
+// =================== COURSES ===================
+message CreateCourseRequest {
+  string instructorId = 1;
+  string title = 2;
+  string subtitle = 3;
+  string category = 4;
+  string level = 5;
+  string language = 6;
+  string description = 7;
+  string thumbnailUrl = 8;
+  double price = 9;
+  optional string status = 10;
+  repeated SectionInput sections = 11;
+}
+
+message SectionInput {
+  string title = 1;
+  int32 order = 2;
+  repeated LectureInput lectures = 3;
+}
+
+message LectureInput {
+  string title = 1;
+  optional string videoUrl = 2;
+  optional int32 videoDuration = 3;
+  int32 order = 4;
+}
+
+message UpdateCourseRequest {
+  string id = 1;
+  string instructorId = 2; // For authorization check
+  optional string title = 3;
+  optional string subtitle = 4;
+  optional string category = 5;
+  optional string level = 6;
+  optional string language = 7;
+  optional string description = 8;
+  optional string thumbnailUrl = 9;
+  optional double price = 10;
+  optional string status = 11;
+}
+
+message CourseResponse {
+  string id = 1;
+  string instructorId = 2;
+  string title = 3;
+  string subtitle = 4;
+  string category = 5;
+  string level = 6;
+  string language = 7;
+  string description = 8;
+  string thumbnailUrl = 9;
+  double price = 10;
+  string status = 11;
+  
+  repeated Section sections = 12; // When fetching course with full details
+  optional double progress = 13;
+}
+
+message GetInstructorCoursesRequest {
+  string instructorId = 1;
+}
+
+message GetCourseRequest {
+  string id = 1;
+}
+
+message GetCatalogCoursesRequest {
+}
+
+message CourseListResponse {
+  repeated CourseResponse courses = 1;
+}
+
+// =================== SECTIONS ===================
+message CreateSectionRequest {
+  string courseId = 1;
+  string instructorId = 2;
+  string title = 3;
+  int32 order = 4;
+}
+
+message UpdateSectionRequest {
+  string id = 1;
+  string instructorId = 2;
+  optional string title = 3;
+  optional int32 order = 4;
+}
+
+message SectionResponse {
+  string id = 1;
+  string courseId = 2;
+  string title = 3;
+  int32 order = 4;
+  repeated Lecture lectures = 5;
+}
+
+message Section {
+  string id = 1;
+  string title = 2;
+  int32 order = 3;
+  repeated Lecture lectures = 4;
+}
+
+// =================== LECTURES ===================
+message CreateLectureRequest {
+  string sectionId = 1;
+  string instructorId = 2;
+  string title = 3;
+  optional string videoUrl = 4;
+  optional int32 videoDuration = 5;
+  int32 order = 6;
+}
+
+message UpdateLectureRequest {
+  string id = 1;
+  string instructorId = 2;
+  optional string title = 3;
+  optional string videoUrl = 4;
+  optional int32 videoDuration = 5;
+  optional int32 order = 6;
+}
+
+message LectureResponse {
+  string id = 1;
+  string sectionId = 2;
+  string title = 3;
+  string videoUrl = 4;
+  int32 videoDuration = 5;
+  int32 order = 6;
+}
+
+message Lecture {
+  string id = 1;
+  string title = 2;
+  string videoUrl = 3;
+  int32 videoDuration = 4;
+  int32 order = 5;
+}
+
+// =================== STUDENT ACTIONS ===================
+message EnrollCourseRequest {
+  string userId = 1;
+  string courseId = 2;
+}
+
+message EnrollCourseResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetStudentCoursesRequest {
+  string userId = 1;
+}
+
+message UpdateProgressRequest {
+  string userId = 1;
+  string courseId = 2;
+  string lectureId = 3;
+  bool completed = 4;
+}
+
+message GetProgressRequest {
+  string userId = 1;
+  string courseId = 2;
+}
+
+message ProgressResponse {
+  double progress = 1; // 0 to 100
+  repeated string completedLectureIds = 2;
+}
+
+message GetStudentStatsRequest {
+  string userId = 1;
+}
+
+message StudentStatsResponse {
+  int32 coursesEnrolled = 1;
+  int32 hoursLearned = 2;
+  int32 dayStreak = 3;
+  int32 certificates = 4;
+}

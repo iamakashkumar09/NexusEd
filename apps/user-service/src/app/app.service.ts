@@ -59,7 +59,7 @@ export class AppService {
     socialLinks?: string;
   }) {
     try {
-      const userRole = data.role || 'student';
+      const userRole = (data.role || 'STUDENT').toString().toUpperCase();
 
       await this.prisma.userProfile.upsert({
         where: { userId: data.userId },
@@ -105,8 +105,8 @@ export class AppService {
         },
         create: {
           userId: data.userId,
-          firstName: data.firstName,
-          lastName: data.lastName,
+          firstName: data.firstName || 'Unknown',
+          lastName: data.lastName || 'User',
           email: data.email || '',
           role: userRole,
           studentProfile: (userRole === 'STUDENT' || userRole === 'student') ? { 

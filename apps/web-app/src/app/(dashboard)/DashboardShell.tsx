@@ -86,6 +86,7 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
         position: 'sticky',
         top: 0,
         height: '100vh',
+        willChange: 'width',
       }}>
 
         {/* Logo + collapse button */}
@@ -393,7 +394,15 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
         </header>
 
         {/* ─── Page Content ─────────────────────────────────────────── */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: 32 }}>
+        <main
+          key={pathname}
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: 32,
+            animation: 'pageEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both',
+          }}
+        >
           {children}
         </main>
       </div>

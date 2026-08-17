@@ -145,9 +145,58 @@ input, select, textarea { font-family: var(--font-sans); }
   to { transform: rotate(360deg); }
 }
 
-.animate-fadeUp  { animation: fadeUp  0.35s ease both; }
-.animate-fadeIn  { animation: fadeIn  0.25s ease both; }
-.animate-spin    { animation: spin    0.8s linear infinite; }
+/* ─── Page progress bar ───────────────────────────────────────────────────── */
+@keyframes progress-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+@keyframes progress-indeterminate {
+  0%   { transform: translateX(-100%) scaleX(0.3); }
+  50%  { transform: translateX(0%) scaleX(0.6); }
+  100% { transform: translateX(100%) scaleX(0.3); }
+}
+@keyframes progress-complete {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ─── Skeleton shimmer ────────────────────────────────────────────────────── */
+@keyframes skeleton-wave {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+/* ─── Page content enter ──────────────────────────────────────────────────── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── AI panel spring ─────────────────────────────────────────────────────── */
+@keyframes panelSpringIn {
+  0%   { opacity: 0; transform: translateY(24px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(-4px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-fadeUp     { animation: fadeUp     0.35s ease both; }
+.animate-fadeIn     { animation: fadeIn     0.25s ease both; }
+.animate-spin       { animation: spin       0.8s linear infinite; }
+.animate-pageEnter  { animation: pageEnter  0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ─── Skeleton utility ────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 37%,
+    var(--surface-2) 63%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-wave 1.4s ease infinite;
+  border-radius: var(--r-md);
+}
+
 
 /* ─── Input base ──────────────────────────────────────────────────────────── */
 .nx-input {

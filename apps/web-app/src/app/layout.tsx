@@ -1,4 +1,6 @@
 import './global.css';
+import { Suspense } from 'react';
+import { PageProgressBar } from '@/components/PageProgressBar';
 
 export const metadata = {
   title: 'NexusEd | AI-Powered E-Learning',
@@ -12,7 +14,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Suspense fallback={null}>
+          <PageProgressBar />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

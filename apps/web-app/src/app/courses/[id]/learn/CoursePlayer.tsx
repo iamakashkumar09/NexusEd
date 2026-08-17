@@ -116,7 +116,7 @@ declare global {
   }
 }
 
-function useYouTubePlayer(videoId: string | null, containerId: string) {
+function useYouTubePlayer(videoId: string | null, containerId: string, onEnded?: () => void) {
   const playerRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -126,6 +126,11 @@ function useYouTubePlayer(videoId: string | null, containerId: string) {
   const [muted, setMuted] = useState(false);
   const [playbackRate, setPlaybackRateState] = useState(1);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onEndedRef = useRef(onEnded);
+
+  useEffect(() => {
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
 
   const initPlayer = useCallback((vid: string) => {
     if (playerRef.current) {
@@ -172,7 +177,10 @@ function useYouTubePlayer(videoId: string | null, containerId: string) {
           } else {
             setPlaying(false);
             if (timerRef.current) clearInterval(timerRef.current);
-            if (state === 0) setCurrentTime(0); // ended
+            if (state === 0) { // ended
+              setCurrentTime(0);
+              if (onEndedRef.current) onEndedRef.current();
+            }
           }
         },
       },
@@ -752,7 +760,11 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
     ready, playing, currentTime, duration, volume, muted,
     togglePlay, seekTo, setVol, toggleMute, requestFullscreen,
     playbackRate, setPlaybackRate
-  } = useYouTubePlayer(videoId, 'yt-player-frame');
+  } = useYouTubePlayer(videoId, 'yt-player-frame', () => {
+    if (activeLecture && !completed.has(activeLecture.id)) {
+      toggleComplete(activeLecture.id, true);
+    }
+  });
 
   const currentIdx = activeLecture ? allLectures.findIndex(l => l.id === activeLecture.id) : -1;
   const hasPrev = currentIdx > 0;

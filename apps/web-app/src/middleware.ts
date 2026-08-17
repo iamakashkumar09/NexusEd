@@ -1,18 +1,29 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// All routes that require authentication
+const PROTECTED_PATHS = [
+  '/dashboard',
+  '/courses',
+  '/catalog',
+  '/profile',
+  '/settings',
+  '/analytics',
+  '/messages',
+];
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
+  const { pathname } = request.nextUrl;
 
-  // Protect dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  // Protect authenticated routes
+  const isProtected = PROTECTED_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+  if (isProtected && !token) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Prevent logged-in users from seeing login/register
-  if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')) {
+  if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
     if (token) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -22,5 +33,15 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: [
+    '/dashboard/:path*',
+    '/courses/:path*',
+    '/catalog/:path*',
+    '/profile/:path*',
+    '/settings/:path*',
+    '/analytics/:path*',
+    '/messages/:path*',
+    '/login',
+    '/register',
+  ],
 };

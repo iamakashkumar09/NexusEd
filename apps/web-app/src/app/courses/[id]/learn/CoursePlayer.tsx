@@ -424,13 +424,31 @@ function AIPanelButton({ onClick, open }: { onClick: () => void; open: boolean }
       style={{
         position: 'fixed', bottom: 28, right: 28, zIndex: 100,
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: open ? '10px 18px' : '12px 20px',
+        padding: '11px 22px',
         borderRadius: 999, border: 'none', cursor: 'pointer',
-        background: open ? 'var(--surface-3)' : 'linear-gradient(135deg, #5e6ad2, #828fff)',
+        background: open
+          ? 'rgba(30,31,40,0.95)'
+          : 'linear-gradient(135deg, #5e6ad2 0%, #828fff 60%, #a682ff 100%)',
         color: '#fff', fontSize: 14, fontWeight: 700,
-        boxShadow: open ? 'none' : '0 4px 24px rgba(94,106,210,0.5), 0 0 0 1px rgba(94,106,210,0.3)',
-        transition: 'all 0.2s',
+        boxShadow: open
+          ? '0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08) inset'
+          : '0 4px 24px rgba(94,106,210,0.55), 0 0 0 1px rgba(255,255,255,0.15) inset',
+        transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
         letterSpacing: '-0.01em',
+        backdropFilter: open ? 'blur(16px)' : 'none',
+        WebkitBackdropFilter: open ? 'blur(16px)' : 'none',
+      }}
+      onMouseEnter={e => {
+        if (!open) {
+          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px) scale(1.02)';
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(94,106,210,0.7), 0 0 0 1px rgba(255,255,255,0.2) inset';
+        }
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLButtonElement).style.transform = '';
+        (e.currentTarget as HTMLButtonElement).style.boxShadow = open
+          ? '0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08) inset'
+          : '0 4px 24px rgba(94,106,210,0.55), 0 0 0 1px rgba(255,255,255,0.15) inset';
       }}
     >
       <AIIcon />
@@ -446,118 +464,230 @@ function AIPanel({ courseTitle, lectureTitle, open }: { courseTitle: string; lec
     { role: 'ai', text: `Hi! I'm your AI Tutor for **${courseTitle}**. Ask me anything about this lecture — concepts, code, or career advice!` }
   ]);
   const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
+
+  // Auto-resize textarea
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+    }
+  };
 
   const send = () => {
     const q = input.trim();
     if (!q) return;
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setInput('');
-    // Placeholder AI response
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+    setIsTyping(true);
     setTimeout(() => {
+      setIsTyping(false);
       setMessages(prev => [...prev, {
         role: 'ai',
         text: `Great question about "${q}"! The AI model will be connected here soon. Stay tuned — this panel is ready for your questions about ${lectureTitle}.`,
       }]);
-    }, 800);
+    }, 1200);
   };
+
+  const SUGGESTIONS = ['Explain this concept', 'Give me an example', 'What should I learn next?', 'Summarize this lecture'];
 
   return (
     <div style={{
       position: 'fixed', bottom: 88, right: 28, zIndex: 99,
-      width: 380, maxHeight: '60vh',
+      width: 480,
+      maxHeight: '72vh',
       background: 'var(--surface-1)',
       border: '1px solid var(--hairline-strong)',
-      borderRadius: 20,
-      boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+      borderRadius: 22,
+      boxShadow: '0 32px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.04) inset',
       display: 'flex', flexDirection: 'column',
-      transform: open ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
+      transform: open ? 'translateY(0) scale(1)' : 'translateY(28px) scale(0.94)',
       opacity: open ? 1 : 0,
       pointerEvents: open ? 'all' : 'none',
-      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+      transition: open
+        ? 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        : 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
       overflow: 'hidden',
     }}>
       {/* Header */}
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline)', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #5e6ad2, #828fff)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <AIIcon />
+      <div style={{
+        padding: '18px 22px',
+        borderBottom: '1px solid var(--hairline)',
+        background: 'linear-gradient(135deg, rgba(94,106,210,0.15) 0%, rgba(130,143,255,0.08) 100%)',
+        display: 'flex', alignItems: 'center', gap: 12,
+        flexShrink: 0,
+      }}>
+        {/* Glowing AI icon */}
+        <div style={{
+          width: 40, height: 40, borderRadius: 12,
+          background: 'linear-gradient(135deg, #5e6ad2 0%, #828fff 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(94,106,210,0.5)',
+          flexShrink: 0,
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+            <path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z" />
+            <path d="M8 12h8M12 8v8" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="3" fill="#fff" opacity="0.25" />
+          </svg>
         </div>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>AI Tutor</div>
-          <div style={{ fontSize: 11, color: 'var(--ink-subtle)' }}>Ask about: {lectureTitle}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em' }}>AI Tutor</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-subtle)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📖 {lectureTitle}</div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--primary-bg)', color: 'var(--primary)', border: '1px solid rgba(94,106,210,0.2)' }}>
-            BETA
-          </span>
-        </div>
+        <span style={{
+          fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 999,
+          background: 'linear-gradient(135deg, rgba(94,106,210,0.25), rgba(130,143,255,0.15))',
+          color: 'var(--primary-light)', border: '1px solid rgba(94,106,210,0.3)',
+          letterSpacing: '0.06em',
+        }}>
+          BETA
+        </span>
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {messages.map((m, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexDirection: m.role === 'user' ? 'row-reverse' : 'row' }}>
+          <div key={i} style={{
+            display: 'flex', gap: 10,
+            alignItems: 'flex-start',
+            flexDirection: m.role === 'user' ? 'row-reverse' : 'row',
+            animation: 'pageEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both',
+          }}>
             {m.role === 'ai' && (
-              <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #5e6ad2, #828fff)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
+              <div style={{
+                width: 28, height: 28, borderRadius: 9, flexShrink: 0, marginTop: 2,
+                background: 'linear-gradient(135deg, #5e6ad2, #828fff)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(94,106,210,0.4)',
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
+                  <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+                </svg>
               </div>
             )}
             <div style={{
-              maxWidth: '80%', padding: '10px 14px',
-              borderRadius: m.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-              background: m.role === 'user' ? 'var(--primary)' : 'var(--surface-3)',
+              maxWidth: '78%', padding: '11px 15px',
+              borderRadius: m.role === 'user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
+              background: m.role === 'user'
+                ? 'linear-gradient(135deg, #5e6ad2, #828fff)'
+                : 'var(--surface-3)',
               color: m.role === 'user' ? '#fff' : 'var(--ink-muted)',
-              fontSize: 13, lineHeight: 1.55,
+              fontSize: 14, lineHeight: 1.6,
+              boxShadow: m.role === 'user'
+                ? '0 4px 16px rgba(94,106,210,0.35)'
+                : '0 1px 4px rgba(0,0,0,0.2)',
             }}>
               {m.text}
             </div>
           </div>
         ))}
+        {/* Typing indicator */}
+        {isTyping && (
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', animation: 'pageEnter 0.2s ease both' }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 9, flexShrink: 0,
+              background: 'linear-gradient(135deg, #5e6ad2, #828fff)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
+                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+              </svg>
+            </div>
+            <div style={{
+              padding: '12px 16px', borderRadius: '4px 18px 18px 18px',
+              background: 'var(--surface-3)',
+              display: 'flex', gap: 4, alignItems: 'center',
+            }}>
+              {[0, 0.18, 0.36].map((delay, i) => (
+                <div key={i} style={{
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: 'var(--ink-subtle)',
+                  animation: `pulse-glow 1s ease ${delay}s infinite`,
+                  animationName: 'typing-dot',
+                }} />
+              ))}
+              <style>{`@keyframes typing-dot { 0%,80%,100%{transform:scale(1);opacity:0.5} 40%{transform:scale(1.2);opacity:1} }`}</style>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Suggestions */}
-      {messages.length === 1 && (
-        <div style={{ padding: '0 16px 12px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {['Explain this concept', 'Give me an example', 'What should I learn next?'].map((s, i) => (
-            <button key={i} onClick={() => setInput(s)} style={{
-              padding: '5px 12px', borderRadius: 999, border: '1px solid var(--hairline-strong)',
-              background: 'var(--surface-2)', color: 'var(--ink-subtle)',
-              fontSize: 11, fontWeight: 600, cursor: 'pointer',
-            }}>
+      {messages.length === 1 && !isTyping && (
+        <div style={{ padding: '0 18px 12px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {SUGGESTIONS.map((s, i) => (
+            <button key={i} onClick={() => { setInput(s); textareaRef.current?.focus(); }} style={{
+              padding: '6px 14px', borderRadius: 999,
+              border: '1px solid var(--hairline-strong)',
+              background: 'var(--surface-2)', color: 'var(--ink-muted)',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-3)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-muted)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--hairline-strong)'; }}
+            >
               {s}
             </button>
           ))}
         </div>
       )}
 
-      {/* Input */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--hairline)', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+      {/* Input area */}
+      <div style={{
+        padding: '12px 16px',
+        borderTop: '1px solid var(--hairline)',
+        display: 'flex', gap: 10, alignItems: 'flex-end',
+        background: 'var(--surface-2)',
+        flexShrink: 0,
+      }}>
         <textarea
+          ref={textareaRef}
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           placeholder="Ask anything about this lecture..."
           rows={1}
           style={{
-            flex: 1, padding: '9px 12px',
-            background: 'var(--surface-2)', border: '1px solid var(--hairline-strong)',
-            borderRadius: 12, color: 'var(--ink)', fontSize: 13, outline: 'none',
+            flex: 1, padding: '10px 14px',
+            background: 'var(--surface-3)', border: '1px solid var(--hairline-strong)',
+            borderRadius: 14, color: 'var(--ink)', fontSize: 14, outline: 'none',
             resize: 'none', fontFamily: 'var(--font-sans)',
-            lineHeight: 1.5,
+            lineHeight: 1.5, minHeight: 40, maxHeight: 120,
+            transition: 'border-color 0.15s, box-shadow 0.15s',
+            overflow: 'hidden',
           }}
+          onFocus={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(94,106,210,0.15)'; }}
+          onBlur={e => { e.currentTarget.style.borderColor = 'var(--hairline-strong)'; e.currentTarget.style.boxShadow = 'none'; }}
         />
-        <button onClick={send} style={{
-          width: 36, height: 36, borderRadius: 10, border: 'none',
-          background: input.trim() ? 'var(--primary)' : 'var(--surface-3)',
-          color: '#fff', cursor: input.trim() ? 'pointer' : 'default',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'background 0.15s', flexShrink: 0,
-        }}>
+        <button
+          onClick={send}
+          disabled={!input.trim()}
+          style={{
+            width: 40, height: 40, borderRadius: 12, border: 'none',
+            background: input.trim()
+              ? 'linear-gradient(135deg, #5e6ad2, #828fff)'
+              : 'var(--surface-3)',
+            color: '#fff',
+            cursor: input.trim() ? 'pointer' : 'default',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.2s', flexShrink: 0,
+            boxShadow: input.trim() ? '0 2px 12px rgba(94,106,210,0.4)' : 'none',
+            transform: input.trim() ? 'scale(1)' : 'scale(0.92)',
+          }}
+        >
           <SendIcon />
         </button>
       </div>

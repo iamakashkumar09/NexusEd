@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from './DashboardShell';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 async function getProfile() {
   const cookieStore = await cookies();
@@ -30,7 +31,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <DashboardShell profile={profile}>
-      {children}
+      <Suspense fallback={<PageSkeleton />}>
+        {children}
+      </Suspense>
     </DashboardShell>
   );
 }

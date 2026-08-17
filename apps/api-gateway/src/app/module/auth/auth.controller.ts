@@ -64,6 +64,13 @@ export class AuthController implements OnModuleInit {
     }
   }
 
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/' });
+    return { success: true, message: 'Logged out successfully' };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req: any) {

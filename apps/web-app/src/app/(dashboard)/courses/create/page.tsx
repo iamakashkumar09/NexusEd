@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 interface Lecture {
   id: string;
   title: string;
-  videoFile: File | null;
+  videoFile?: File | null;
   videoName: string;
   videoUrl?: string;
   duration: string;
@@ -118,7 +118,7 @@ function FocusSelect({ style, children, ...props }: React.SelectHTMLAttributes<H
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
 
-function Step1({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) => void }) {
+function Step1({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<React.SetStateAction<CourseForm>> }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
@@ -129,7 +129,7 @@ function Step1({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
       <Field label="Course Title" required hint="Your title should be compelling and searchable. Think about what your students will be searching for.">
         <FocusInput
           type="text" value={form.title}
-          onChange={e => setForm({ ...form, title: e.target.value })}
+          onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
           placeholder="e.g. Complete React & Next.js Developer Bootcamp 2025"
           maxLength={100}
         />
@@ -139,7 +139,7 @@ function Step1({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
       <Field label="Course Subtitle" required hint="A brief description that appears under the title on search results.">
         <FocusInput
           type="text" value={form.subtitle}
-          onChange={e => setForm({ ...form, subtitle: e.target.value })}
+          onChange={e => setForm(prev => ({ ...prev, subtitle: e.target.value }))}
           placeholder="e.g. Master modern web development with React 19, Next.js 15, TypeScript and more"
           maxLength={200}
         />
@@ -148,19 +148,19 @@ function Step1({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
         <Field label="Category" required>
-          <FocusSelect value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+          <FocusSelect value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}>
             <option value="">Select category</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </FocusSelect>
         </Field>
         <Field label="Level" required>
-          <FocusSelect value={form.level} onChange={e => setForm({ ...form, level: e.target.value })}>
+          <FocusSelect value={form.level} onChange={e => setForm(prev => ({ ...prev, level: e.target.value }))}>
             <option value="">Select level</option>
             {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
           </FocusSelect>
         </Field>
         <Field label="Language" required>
-          <FocusSelect value={form.language} onChange={e => setForm({ ...form, language: e.target.value })}>
+          <FocusSelect value={form.language} onChange={e => setForm(prev => ({ ...prev, language: e.target.value }))}>
             {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
           </FocusSelect>
         </Field>
@@ -169,16 +169,22 @@ function Step1({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
   );
 }
 
-function Step2({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) => void }) {
+function Step2({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<React.SetStateAction<CourseForm>> }) {
   const updateListItem = (key: 'objectives' | 'requirements', index: number, value: string) => {
-    const list = [...form[key]];
-    list[index] = value;
-    setForm({ ...form, [key]: list });
+    setForm(prev => {
+      const list = [...prev[key]];
+      list[index] = value;
+      return { ...prev, [key]: list };
+    });
   };
-  const addListItem = (key: 'objectives' | 'requirements') => setForm({ ...form, [key]: [...form[key], ''] });
+  const addListItem = (key: 'objectives' | 'requirements') => {
+    setForm(prev => ({ ...prev, [key]: [...prev[key], ''] }));
+  };
   const removeListItem = (key: 'objectives' | 'requirements', index: number) => {
-    const list = form[key].filter((_, i) => i !== index);
-    setForm({ ...form, [key]: list.length ? list : [''] });
+    setForm(prev => {
+      const list = prev[key].filter((_, i) => i !== index);
+      return { ...prev, [key]: list.length ? list : [''] };
+    });
   };
 
   const ListBuilder = ({ label, hint, fieldKey }: { label: string; hint: string; fieldKey: 'objectives' | 'requirements' }) => (
@@ -213,7 +219,7 @@ function Step2({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
       <Field label="Course Description" required hint="Describe what your course covers, who it's for, and what they'll learn. Minimum 200 characters.">
         <FocusTextarea
           rows={6} value={form.description}
-          onChange={e => setForm({ ...form, description: e.target.value })}
+          onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
           placeholder="Provide a detailed description of your course. Include the main topics, tools, and technologies covered..."
         />
         <div style={{ fontSize: 11, color: form.description.length < 200 ? '#ff6b6b' : 'var(--ink-subtle)', marginTop: 5, textAlign: 'right' }}>
@@ -225,7 +231,7 @@ function Step2({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
       <Field label="Who is this course for?" hint="Describe your target audience to help students self-select.">
         <FocusTextarea
           rows={3} value={form.targetAudience}
-          onChange={e => setForm({ ...form, targetAudience: e.target.value })}
+          onChange={e => setForm(prev => ({ ...prev, targetAudience: e.target.value }))}
           placeholder="e.g. This course is for aspiring web developers who know basic HTML/CSS and want to level up..."
         />
       </Field>
@@ -233,36 +239,63 @@ function Step2({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
   );
 }
 
-function Step3({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) => void }) {
+function Step3({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<React.SetStateAction<CourseForm>> }) {
   const addSection = () => {
-    const section: Section = { id: Date.now().toString(), title: 'New Section', lectures: [] };
-    setForm({ ...form, sections: [...form.sections, section] });
+    const sectionId = 'sec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    setForm(prev => ({
+      ...prev,
+      sections: [...prev.sections, { id: sectionId, title: `Section ${prev.sections.length + 1}`, lectures: [] }]
+    }));
   };
 
   const updateSection = (id: string, title: string) => {
-    setForm({ ...form, sections: form.sections.map(s => s.id === id ? { ...s, title } : s) });
+    setForm(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === id ? { ...s, title } : s)
+    }));
   };
 
   const removeSection = (id: string) => {
-    setForm({ ...form, sections: form.sections.filter(s => s.id !== id) });
+    setForm(prev => ({
+      ...prev,
+      sections: prev.sections.filter(s => s.id !== id)
+    }));
   };
 
   const addLecture = (sectionId: string) => {
-    const lecture: Lecture = { id: Date.now().toString(), title: 'New Lecture', videoFile: null, videoName: '', duration: '', type: 'video' };
-    setForm({ ...form, sections: form.sections.map(s => s.id === sectionId ? { ...s, lectures: [...s.lectures, lecture] } : s) });
+    const lectureId = 'lec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    setForm(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === sectionId ? {
+        ...s,
+        lectures: [...s.lectures, { id: lectureId, title: 'New Lecture', videoName: '', videoUrl: '', duration: '', type: 'video' }]
+      } : s)
+    }));
   };
 
-  const updateLecture = (sectionId: string, lectureId: string, updates: Partial<Lecture>) => {
-    setForm({ ...form, sections: form.sections.map(s => s.id === sectionId ? { ...s, lectures: s.lectures.map(l => l.id === lectureId ? { ...l, ...updates } : l) } : s) });
-  };
+  const updateLecture = useCallback((sectionId: string, lectureId: string, updates: Partial<Lecture>) => {
+    setForm(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === sectionId ? {
+        ...s,
+        lectures: s.lectures.map(l => l.id === lectureId ? { ...l, ...updates } : l)
+      } : s)
+    }));
+  }, [setForm]);
 
   const removeLecture = (sectionId: string, lectureId: string) => {
-    setForm({ ...form, sections: form.sections.map(s => s.id === sectionId ? { ...s, lectures: s.lectures.filter(l => l.id !== lectureId) } : s) });
+    setForm(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === sectionId ? {
+        ...s,
+        lectures: s.lectures.filter(l => l.id !== lectureId)
+      } : s)
+    }));
   };
 
-  const handleVideoUpload = (sectionId: string, lectureId: string, file: File, videoUrl?: string) => {
-    updateLecture(sectionId, lectureId, { videoFile: file, videoName: file.name, videoUrl });
-  };
+  const handleVideoUpload = useCallback((sectionId: string, lectureId: string, fileName: string, videoUrl?: string) => {
+    updateLecture(sectionId, lectureId, { videoName: fileName, videoUrl });
+  }, [updateLecture]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -274,7 +307,7 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
       {/* Info bar */}
       <div style={{ background: 'rgba(94,106,210,0.08)', border: '1px solid rgba(94,106,210,0.2)', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: 'var(--ink-muted)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
         <span>💡</span>
-        <span>Start every section with an overview, and add lectures sequentially. Supported video formats: MP4, MOV, AVI (max 2GB per file).</span>
+        <span>Start every section with an overview, and add lectures sequentially. Videos are uploaded securely to YouTube.</span>
       </div>
 
       {/* Sections */}
@@ -320,7 +353,8 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
                   {/* Video upload zone */}
                   <VideoUploadZone
                     fileName={lecture.videoName}
-                    onFileSelect={(file, videoUrl) => handleVideoUpload(section.id, lecture.id, file, videoUrl)}
+                    videoUrl={lecture.videoUrl}
+                    onFileSelect={(fileName, videoUrl) => handleVideoUpload(section.id, lecture.id, fileName, videoUrl)}
                   />
                 </div>
               ))}
@@ -348,14 +382,25 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
   );
 }
 
-function VideoUploadZone({ fileName, onFileSelect }: { fileName: string; onFileSelect: (f: File, videoUrl?: string) => void }) {
+function VideoUploadZone({
+  fileName,
+  videoUrl,
+  onFileSelect
+}: {
+  fileName: string;
+  videoUrl?: string;
+  onFileSelect: (fileName: string, videoUrl?: string) => void;
+}) {
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith('video/')) return;
+    if (!file.type.startsWith('video/')) {
+      alert('Please select a valid video file.');
+      return;
+    }
     setUploading(true);
     setUploadProgress(0);
 
@@ -392,15 +437,14 @@ function VideoUploadZone({ fileName, onFileSelect }: { fileName: string; onFileS
       xhr.addEventListener('load', () => {
         setUploading(false);
         if (xhr.status === 200 || xhr.status === 201) {
-          // Upload successful
           try {
             const ytResponse = JSON.parse(xhr.responseText);
             const videoId = ytResponse.id;
-            const videoUrl = videoId ? `https://youtube.com/watch?v=${videoId}` : '';
-            onFileSelect(file, videoUrl);
+            const finalUrl = videoId ? `https://youtube.com/watch?v=${videoId}` : '';
+            onFileSelect(file.name, finalUrl);
           } catch (e) {
             console.error('Failed to parse YouTube response', e);
-            onFileSelect(file, '');
+            onFileSelect(file.name, '');
           }
         } else {
           alert('Upload failed with status ' + xhr.status);
@@ -443,12 +487,14 @@ function VideoUploadZone({ fileName, onFileSelect }: { fileName: string; onFileS
     );
   }
 
-  if (fileName) {
+  const displayName = fileName || (videoUrl ? `Uploaded Video (${videoUrl.includes('v=') ? videoUrl.split('v=')[1] : videoUrl})` : '');
+
+  if (displayName) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'rgba(39,166,68,0.08)', border: '1px solid rgba(39,166,68,0.25)', borderRadius: 8 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#27a644"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8" stroke="#27a644" strokeWidth="2" fill="none"/><line x1="12" y1="3" x2="12" y2="15" stroke="#27a644" strokeWidth="2"/></svg>
-        <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</span>
-        <button onClick={() => onFileSelect(new File([], ''))} style={{ fontSize: 10, color: 'var(--ink-subtle)', background: 'none', border: 'none', cursor: 'pointer' }}>Change</button>
+        <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
+        <button type="button" onClick={() => onFileSelect('', '')} style={{ fontSize: 11, color: 'var(--ink-subtle)', background: 'none', border: 'none', cursor: 'pointer' }}>Change</button>
       </div>
     );
   }
@@ -479,14 +525,14 @@ function VideoUploadZone({ fileName, onFileSelect }: { fileName: string; onFileS
   );
 }
 
-function Step4({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) => void }) {
+function Step4({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<React.SetStateAction<CourseForm>> }) {
   const [thumbDragging, setThumbDragging] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
   const handleThumbnail = (file: File) => {
     if (!file.type.startsWith('image/')) return;
     const url = URL.createObjectURL(file);
-    setForm({ ...form, thumbnail: file, thumbnailPreview: url });
+    setForm(prev => ({ ...prev, thumbnail: file, thumbnailPreview: url }));
   };
 
   return (
@@ -539,7 +585,7 @@ function Step4({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
       <Field label="Pricing" required>
         <div style={{ display: 'flex', gap: 12 }}>
           {(['free', 'paid'] as const).map(type => (
-            <button key={type} onClick={() => setForm({ ...form, pricing: type })} style={{
+            <button key={type} onClick={() => setForm(prev => ({ ...prev, pricing: type }))} style={{
               flex: 1, padding: '16px 20px', borderRadius: 10,
               border: `2px solid ${form.pricing === type ? 'var(--primary)' : 'var(--hairline)'}`,
               background: form.pricing === type ? 'rgba(94,106,210,0.1)' : 'var(--surface-2)',
@@ -558,7 +604,7 @@ function Step4({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-muted)', marginBottom: 6 }}>Course Price (USD)</div>
             <div style={{ position: 'relative', maxWidth: 200 }}>
               <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-subtle)', fontSize: 14, fontWeight: 600 }}>$</span>
-              <FocusInput type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29.99" style={{ paddingLeft: 28 }} min="0" step="0.01" />
+              <FocusInput type="number" value={form.price} onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))} placeholder="29.99" style={{ paddingLeft: 28 }} min="0" step="0.01" />
             </div>
             <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 6 }}>Suggested: $9.99 – $199.99</div>
           </div>
@@ -567,7 +613,7 @@ function Step4({ form, setForm }: { form: CourseForm; setForm: (f: CourseForm) =
 
       {/* Promo video */}
       <Field label="Promotional Video URL" hint="Optional: Link to a YouTube or Vimeo preview video that auto-plays on your course landing page.">
-        <FocusInput type="url" value={form.promoVideo} onChange={e => setForm({ ...form, promoVideo: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
+        <FocusInput type="url" value={form.promoVideo} onChange={e => setForm(prev => ({ ...prev, promoVideo: e.target.value }))} placeholder="https://youtube.com/watch?v=..." />
       </Field>
 
       {/* Summary */}
@@ -621,29 +667,86 @@ export default function CreateCoursePage() {
   }, [router]);
 
   // Load draft on mount
+  const isLoadedRef = useRef(false);
   useEffect(() => {
+    if (isLoadedRef.current) return;
+    isLoadedRef.current = true;
     const draft = localStorage.getItem('course_draft');
     if (draft) {
       try {
         const parsed = JSON.parse(draft);
-        setForm(parsed);
+        if (parsed && typeof parsed === 'object') {
+          setForm(prev => ({
+            ...prev,
+            ...parsed,
+            thumbnail: null,
+            thumbnailPreview: parsed.thumbnailPreview || '',
+            sections: Array.isArray(parsed.sections) && parsed.sections.length > 0
+              ? parsed.sections.map((s: any) => ({
+                  ...s,
+                  lectures: Array.isArray(s.lectures)
+                    ? s.lectures.map((l: any) => ({
+                        ...l,
+                        videoFile: null,
+                        videoName: l.videoName || '',
+                        videoUrl: l.videoUrl || '',
+                      }))
+                    : []
+                }))
+              : prev.sections
+          }));
+        }
       } catch (e) {
         console.error('Failed to parse draft', e);
       }
     }
   }, []);
 
-  const handleSaveDraft = () => {
-    // Strip out non-serializable File objects and blob URLs
+  // Auto-save draft to localStorage whenever form changes
+  useEffect(() => {
+    if (!isLoadedRef.current) return;
+    if (!form.title && form.sections.length === 1 && form.sections[0].lectures.length === 0 && !form.description) {
+      return;
+    }
     const draftForm = {
       ...form,
-      thumbnail: null, // Files cannot be serialized
-      thumbnailPreview: '', // Blob URLs expire on reload
+      thumbnail: null,
+      thumbnailPreview: form.thumbnailPreview.startsWith('blob:') ? '' : form.thumbnailPreview,
       sections: form.sections.map(s => ({
         ...s,
         lectures: s.lectures.map(l => ({
-          ...l,
-          videoFile: null // Files cannot be serialized
+          id: l.id,
+          title: l.title,
+          videoName: l.videoName || '',
+          videoUrl: l.videoUrl || '',
+          duration: l.duration || '',
+          type: l.type || 'video',
+          videoFile: null
+        }))
+      }))
+    };
+    try {
+      localStorage.setItem('course_draft', JSON.stringify(draftForm));
+    } catch (e) {
+      console.warn('Failed to auto-save course draft', e);
+    }
+  }, [form]);
+
+  const handleSaveDraft = () => {
+    const draftForm = {
+      ...form,
+      thumbnail: null,
+      thumbnailPreview: form.thumbnailPreview.startsWith('blob:') ? '' : form.thumbnailPreview,
+      sections: form.sections.map(s => ({
+        ...s,
+        lectures: s.lectures.map(l => ({
+          id: l.id,
+          title: l.title,
+          videoName: l.videoName || '',
+          videoUrl: l.videoUrl || '',
+          duration: l.duration || '',
+          type: l.type || 'video',
+          videoFile: null
         }))
       }))
     };
@@ -670,14 +773,15 @@ export default function CreateCoursePage() {
           level: form.level,
           language: form.language,
           description: form.description,
-          thumbnailUrl: form.thumbnail,
+          thumbnailUrl: form.thumbnailPreview || '',
+          price: form.pricing === 'free' ? 0 : parseFloat(form.price) || 0,
           status: 'PUBLISHED',
           sections: form.sections.map((section, sIndex) => ({
             title: section.title,
             order: sIndex + 1,
             lectures: section.lectures.map((lecture, lIndex) => ({
               title: lecture.title,
-              videoUrl: lecture.videoUrl, // This is the YouTube URL from the upload step
+              videoUrl: lecture.videoUrl || '',
               order: lIndex + 1,
             }))
           }))
@@ -784,7 +888,7 @@ export default function CreateCoursePage() {
 
         {/* Main form area */}
         <div>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 14, padding: 28, marginBottom: 20, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)', minHeight: 500 }}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 14, padding: 28, marginBottom: 20, boxShadow: 'inset 0 1px 0 rgba(255,255,200,0.05)', minHeight: 500 }}>
             <div key={step} style={{ animation: 'slideIn 0.2s ease' }}>
               {step === 1 && <Step1 form={form} setForm={setForm} />}
               {step === 2 && <Step2 form={form} setForm={setForm} />}
@@ -868,3 +972,4 @@ export default function CreateCoursePage() {
     </div>
   );
 }
+

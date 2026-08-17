@@ -177,7 +177,25 @@ export default function SettingsPage() {
           </section>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
+          <button
+            type="button"
+            onClick={async () => {
+              try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+              document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;';
+              document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;';
+              window.location.href = '/login';
+            }}
+            style={{
+              padding: '10px 18px', borderRadius: 8, background: 'transparent',
+              color: '#ff6b6b', fontWeight: 600, fontSize: 13, border: '1px solid rgba(238,0,0,0.25)',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget).style.background = 'rgba(238,0,0,0.08)'; }}
+            onMouseLeave={(e) => { (e.currentTarget).style.background = 'transparent'; }}
+          >
+            Sign Out
+          </button>
           <button type="submit" disabled={saving} style={{
             padding: '10px 24px', borderRadius: 8, background: 'var(--primary)',
             color: '#fff', fontWeight: 600, fontSize: 14, border: 'none',

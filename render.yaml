@@ -14,22 +14,22 @@ services:
         fromService:
           type: web
           name: auth-service
-          envVarKey: RENDER_DISCOVERY_SERVICE
+          property: host
       - key: USER_SERVICE_HOST
         fromService:
           type: web
           name: user-service
-          envVarKey: RENDER_DISCOVERY_SERVICE
+          property: host
       - key: COURSE_SERVICE_HOST
         fromService:
           type: web
           name: course-service
-          envVarKey: RENDER_DISCOVERY_SERVICE
+          property: host
       - key: MEDIA_SERVICE_HOST
         fromService:
           type: web
           name: media-service
-          envVarKey: RENDER_DISCOVERY_SERVICE
+          property: host
 
   # ─── Hybrid Web Services (gRPC + HTTP) ─────────────────────────────────
   - type: web
@@ -55,7 +55,7 @@ services:
         fromService:
           type: web
           name: user-service
-          envVarKey: RENDER_DISCOVERY_SERVICE
+          property: host
 
   - type: web
     name: user-service

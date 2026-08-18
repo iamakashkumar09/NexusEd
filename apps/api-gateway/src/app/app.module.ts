@@ -2,6 +2,20 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PassportModule } from '@nestjs/passport';
 import { join } from 'path';
+import * as grpc from '@grpc/grpc-js';
+
+function getGrpcConfig(hostVar: string | undefined, defaultPort: string) {
+  if (hostVar && !hostVar.includes('0.0.0.0') && !hostVar.includes('localhost')) {
+    const host = hostVar.includes('onrender.com') ? hostVar : `${hostVar}.onrender.com`;
+    return {
+      url: `${host}:443`,
+      credentials: grpc.credentials.createSsl(),
+    };
+  }
+  return {
+    url: hostVar ? `${hostVar}:${defaultPort}` : `0.0.0.0:${defaultPort}`,
+  };
+}
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -22,7 +36,7 @@ import { MediaController } from './module/media/media.controller';
         options: {
           package: 'auth',
           protoPath: join(__dirname, '../../../libs/shared/proto/auth.proto'),
-          url: process.env.AUTH_SERVICE_HOST ? `${process.env.AUTH_SERVICE_HOST}:10000` : '0.0.0.0:5000',
+          ...getGrpcConfig(process.env.AUTH_SERVICE_HOST, '5000'),
         },
       },
       {
@@ -31,7 +45,7 @@ import { MediaController } from './module/media/media.controller';
         options: {
           package: 'course',
           protoPath: join(__dirname, '../../../libs/shared/proto/course.proto'),
-          url: process.env.COURSE_SERVICE_HOST ? `${process.env.COURSE_SERVICE_HOST}:10000` : '0.0.0.0:5002',
+          ...getGrpcConfig(process.env.COURSE_SERVICE_HOST, '5002'),
         },
       },
       {
@@ -40,7 +54,7 @@ import { MediaController } from './module/media/media.controller';
         options: {
           package: 'media',
           protoPath: join(__dirname, '../../../libs/shared/proto/media.proto'),
-          url: process.env.MEDIA_SERVICE_HOST ? `${process.env.MEDIA_SERVICE_HOST}:10000` : '0.0.0.0:5004',
+          ...getGrpcConfig(process.env.MEDIA_SERVICE_HOST, '5004'),
         },
       },
     ]),

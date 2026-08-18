@@ -22,7 +22,7 @@ import { EmailService } from './email.service';
         options: {
           package: 'user',
           protoPath: join(__dirname, '../../../libs/shared/proto/user.proto'),
-          url: process.env.USER_SERVICE_HOST ? `${process.env.USER_SERVICE_HOST}:5001` : '0.0.0.0:5001',
+          url: process.env.USER_SERVICE_HOST ? `${process.env.USER_SERVICE_HOST}:10000` : '0.0.0.0:5001',
         },
       },
     ]),

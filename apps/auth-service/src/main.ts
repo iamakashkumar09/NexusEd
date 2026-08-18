@@ -15,26 +15,18 @@ dotenv.config({ path: join(__dirname, '../../../apps/auth-service/.env') });
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
-  app.connectMicroservice<MicroserviceOptions>({
+  const port = process.env.PORT || 5000;
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
     transport: Transport.GRPC,
     options: {
       package: 'auth',
       protoPath: join(__dirname, '../../../libs/shared/proto/auth.proto'),
-      url: '0.0.0.0:5000', // auth-service runs on 5000
+      url: `0.0.0.0:${port}`,
     },
   });
 
-  await app.startAllMicroservices();
-
-  // Dummy HTTP health check for Render Web Services
-  const httpAdapter = app.getHttpAdapter();
-  httpAdapter.get('/', (req, res) => res.send('OK'));
-
-  const port = process.env.PORT || 3005;
-  await app.listen(port);
-  console.log(`Auth hybrid service: HTTP on port ${port}, gRPC on 5000`);
+  await app.listen();
+  console.log(`Auth Microservice is listening on port ${port}`);
 }
 
 bootstrap();

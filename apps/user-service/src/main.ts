@@ -14,26 +14,18 @@ dotenv.config({ path: join(__dirname, '../../../apps/user-service/.env') });
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
-  app.connectMicroservice<MicroserviceOptions>({
+  const port = process.env.PORT || 5001;
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
     transport: Transport.GRPC,
     options: {
       package: 'user',
       protoPath: join(__dirname, '../../../libs/shared/proto/user.proto'),
-      url: '0.0.0.0:5001', // user-service runs on 5001
+      url: `0.0.0.0:${port}`,
     },
   });
 
-  await app.startAllMicroservices();
-
-  // Dummy HTTP health check for Render Web Services
-  const httpAdapter = app.getHttpAdapter();
-  httpAdapter.get('/', (req, res) => res.send('OK'));
-
-  const port = process.env.PORT || 3006;
-  await app.listen(port);
-  console.log(`User hybrid service: HTTP on port ${port}, gRPC on 5001`);
+  await app.listen();
+  console.log(`User Microservice is listening on port ${port}`);
 }
 
 bootstrap();

@@ -1,0 +1,73 @@
+services:
+  # ─── Public Web Services ──────────────────────────────────────────
+  - type: web
+    name: web-app
+    env: node
+    buildCommand: npm install && npx nx build web-app
+    startCommand: npx nx start web-app
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: api-gateway
+          envVar: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: api-gateway
+    env: node
+    buildCommand: npm install && npx nx build api-gateway
+    startCommand: node dist/apps/api-gateway/main.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: auth-service:5000
+      - key: USER_SERVICE_URL
+        value: user-service:5001
+      - key: COURSE_SERVICE_URL
+        value: course-service:5002
+      - key: MEDIA_SERVICE_URL
+        value: media-service:5003
+
+  # ─── Private Microservices (gRPC) ─────────────────────────────────
+  - type: pserv
+    name: auth-service
+    env: node
+    buildCommand: npm install && npx nx build auth-service
+    startCommand: node dist/apps/auth-service/main.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: USER_SERVICE_URL
+        value: user-service:5001
+
+  - type: pserv
+    name: user-service
+    env: node
+    buildCommand: npm install && npx nx build user-service
+    startCommand: node dist/apps/user-service/main.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+
+  - type: pserv
+    name: course-service
+    env: node
+    buildCommand: npm install && npx nx build course-service
+    startCommand: node dist/apps/course-service/main.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+
+  - type: pserv
+    name: media-service
+    env: node
+    buildCommand: npm install && npx nx build media-service
+    startCommand: node dist/apps/media-service/main.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false

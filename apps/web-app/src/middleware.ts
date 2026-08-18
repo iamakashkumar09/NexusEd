@@ -22,6 +22,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Handle logout route to clear cookies and break redirect loops
+  if (pathname === '/logout') {
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('token');
+    response.cookies.delete('refreshToken');
+    return response;
+  }
+
   // Prevent logged-in users from seeing login/register
   if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
     if (token) {

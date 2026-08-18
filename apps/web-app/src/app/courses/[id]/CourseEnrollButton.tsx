@@ -40,7 +40,7 @@ export default function CourseEnrollButton({ courseId }: { courseId: string }) {
       });
 
       if (res.status === 401) {
-        router.push('/login');
+        router.push('/logout');
         return;
       }
 

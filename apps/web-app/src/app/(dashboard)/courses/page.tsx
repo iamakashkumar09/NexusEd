@@ -9,7 +9,7 @@ async function getProfile() {
   if (!token) return { role: 'STUDENT' };
 
   try {
-    const res = await fetch('http://localhost:3000/api/user/profile', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/user/profile`, {
       headers: { Cookie: `token=${token}` },
       cache: 'no-store',
     });

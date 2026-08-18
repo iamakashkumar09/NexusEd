@@ -20,4 +20,19 @@ export class AppController {
   async refreshToken(data: { userId: string, refreshToken: string }) {
     return this.appService.refreshToken(data);
   }
+
+  @GrpcMethod('AuthService', 'ForgotPassword')
+  async forgotPassword(data: any) {
+    return this.appService.forgotPassword(data);
+  }
+
+  @GrpcMethod('AuthService', 'VerifyOtp')
+  async verifyOtp(data: any) {
+    return this.appService.verifyOtp(data);
+  }
+
+  @GrpcMethod('AuthService', 'ResetPassword')
+  async resetPassword(data: any) {
+    return this.appService.resetPassword(data);
+  }
 }

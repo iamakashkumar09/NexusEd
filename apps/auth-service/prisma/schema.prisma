@@ -11,7 +11,17 @@ model UserCredentials {
   email              String   @unique
   passwordHash       String
   hashedRefreshToken String?
+  isVerified         Boolean  @default(false)
   role               String   @default("student")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  type      String   // 'REGISTER' or 'RESET_PASSWORD'
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

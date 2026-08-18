@@ -58,58 +58,34 @@ const STEPS = [
 
 // ─── Styled Primitives ────────────────────────────────────────────────────────
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'var(--surface-2)',
-  border: '1px solid var(--hairline)', borderRadius: 8,
-  padding: '11px 14px', color: 'var(--ink)', fontSize: 14,
-  outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.15s, box-shadow 0.15s',
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 13, fontWeight: 600, color: 'var(--ink-muted)', marginBottom: 6, display: 'block',
-};
+const inputClasses = "w-full bg-surface-2 border border-hairline rounded-lg px-3.5 py-[11px] text-ink text-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/10";
 
 function Field({ label, hint, children, required }: { label: string; hint?: string; children: React.ReactNode; required?: boolean }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      <label style={labelStyle}>
-        {label} {required && <span style={{ color: '#ff6b6b' }}>*</span>}
+    <div className="flex flex-col">
+      <label className="text-[13px] font-semibold text-ink-muted mb-1.5 block">
+        {label} {required && <span className="text-error">*</span>}
       </label>
-      {hint && <div style={{ fontSize: 12, color: 'var(--ink-subtle)', marginBottom: 8 }}>{hint}</div>}
+      {hint && <div className="text-xs text-ink-subtle mb-2">{hint}</div>}
       {children}
     </div>
   );
 }
 
-function FocusInput({ style, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      style={{ ...inputStyle, ...style }}
-      onFocus={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(94,106,210,0.12)'; }}
-      onBlur={e => { e.currentTarget.style.borderColor = 'var(--hairline)'; e.currentTarget.style.boxShadow = 'none'; }}
-    />
-  );
+function FocusInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={`${inputClasses} ${className || ''}`} />;
 }
 
-function FocusTextarea({ style, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      {...props}
-      style={{ ...inputStyle, resize: 'vertical', ...style }}
-      onFocus={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(94,106,210,0.12)'; }}
-      onBlur={e => { e.currentTarget.style.borderColor = 'var(--hairline)'; e.currentTarget.style.boxShadow = 'none'; }}
-    />
-  );
+function FocusTextarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={`${inputClasses} resize-y ${className || ''}`} />;
 }
 
-function FocusSelect({ style, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+function FocusSelect({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      style={{ ...inputStyle, appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 36, cursor: 'pointer', ...style }}
-      onFocus={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(94,106,210,0.12)'; }}
-      onBlur={e => { e.currentTarget.style.borderColor = 'var(--hairline)'; e.currentTarget.style.boxShadow = 'none'; }}
+      className={`${inputClasses} appearance-none cursor-pointer pr-9 ${className || ''}`}
+      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
     >
       {children}
     </select>
@@ -120,10 +96,10 @@ function FocusSelect({ style, children, ...props }: React.SelectHTMLAttributes<H
 
 function Step1({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<React.SetStateAction<CourseForm>> }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="flex flex-col gap-6">
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.03em', marginBottom: 6 }}>Course Basics</h2>
-        <p style={{ fontSize: 14, color: 'var(--ink-subtle)' }}>Start with the foundational details that define your course.</p>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight mb-1.5">Course Basics</h2>
+        <p className="text-sm text-ink-subtle">Start with the foundational details that define your course.</p>
       </div>
 
       <Field label="Course Title" required hint="Your title should be compelling and searchable. Think about what your students will be searching for.">
@@ -133,7 +109,7 @@ function Step1({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
           placeholder="e.g. Complete React & Next.js Developer Bootcamp 2025"
           maxLength={100}
         />
-        <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 5, textAlign: 'right' }}>{form.title.length}/100</div>
+        <div className="text-[11px] text-ink-subtle mt-1.5 text-right">{form.title.length}/100</div>
       </Field>
 
       <Field label="Course Subtitle" required hint="A brief description that appears under the title on search results.">
@@ -143,10 +119,10 @@ function Step1({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
           placeholder="e.g. Master modern web development with React 19, Next.js 15, TypeScript and more"
           maxLength={200}
         />
-        <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 5, textAlign: 'right' }}>{form.subtitle.length}/200</div>
+        <div className="text-[11px] text-ink-subtle mt-1.5 text-right">{form.subtitle.length}/200</div>
       </Field>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <Field label="Category" required>
           <FocusSelect value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}>
             <option value="">Select category</option>
@@ -189,20 +165,20 @@ function Step2({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
 
   const ListBuilder = ({ label, hint, fieldKey }: { label: string; hint: string; fieldKey: 'objectives' | 'requirements' }) => (
     <Field label={label} hint={hint}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="flex flex-col gap-2.5">
         {form[fieldKey].map((item, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div key={i} className="flex gap-2 items-center">
             <FocusInput
               type="text" value={item}
               onChange={e => updateListItem(fieldKey, i, e.target.value)}
               placeholder={fieldKey === 'objectives' ? 'e.g. Build full-stack apps with React and Node.js' : 'e.g. Basic knowledge of JavaScript'}
             />
-            <button onClick={() => removeListItem(fieldKey, i)} style={{ width: 34, height: 36, borderRadius: 7, border: '1px solid var(--hairline)', background: 'var(--surface-2)', color: 'var(--ink-subtle)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button type="button" onClick={() => removeListItem(fieldKey, i)} className="w-9 h-[42px] rounded-lg border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 transition-colors cursor-pointer shrink-0 flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         ))}
-        <button onClick={() => addListItem(fieldKey)} style={{ alignSelf: 'flex-start', padding: '7px 14px', borderRadius: 7, border: '1px dashed var(--hairline-strong)', background: 'transparent', color: 'var(--primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button type="button" onClick={() => addListItem(fieldKey)} className="self-start px-3.5 py-1.5 rounded-lg border border-dashed border-hairline-strong bg-transparent text-primary text-xs font-semibold cursor-pointer flex items-center gap-1.5 hover:bg-primary/5 transition-colors mt-1">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add item
         </button>
@@ -211,10 +187,10 @@ function Step2({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="flex flex-col gap-6">
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.03em', marginBottom: 6 }}>Course Details</h2>
-        <p style={{ fontSize: 14, color: 'var(--ink-subtle)' }}>A complete description helps students decide if your course is right for them.</p>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight mb-1.5">Course Details</h2>
+        <p className="text-sm text-ink-subtle">A complete description helps students decide if your course is right for them.</p>
       </div>
       <Field label="Course Description" required hint="Describe what your course covers, who it's for, and what they'll learn. Minimum 200 characters.">
         <FocusTextarea
@@ -222,7 +198,7 @@ function Step2({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
           onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
           placeholder="Provide a detailed description of your course. Include the main topics, tools, and technologies covered..."
         />
-        <div style={{ fontSize: 11, color: form.description.length < 200 ? '#ff6b6b' : 'var(--ink-subtle)', marginTop: 5, textAlign: 'right' }}>
+        <div className={`text-[11px] mt-1.5 text-right ${form.description.length < 200 ? 'text-error' : 'text-ink-subtle'}`}>
           {form.description.length} / 200 min
         </div>
       </Field>
@@ -298,54 +274,51 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
   }, [updateLecture]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="flex flex-col gap-6">
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.03em', marginBottom: 6 }}>Curriculum</h2>
-        <p style={{ fontSize: 14, color: 'var(--ink-subtle)' }}>Build your course structure with sections and lectures. Students learn best with a clear, logical flow.</p>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight mb-1.5">Curriculum</h2>
+        <p className="text-sm text-ink-subtle">Build your course structure with sections and lectures. Students learn best with a clear, logical flow.</p>
       </div>
 
       {/* Info bar */}
-      <div style={{ background: 'rgba(94,106,210,0.08)', border: '1px solid rgba(94,106,210,0.2)', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: 'var(--ink-muted)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        <span>💡</span>
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-3.5 text-[13px] text-ink-muted flex gap-2 items-start">
+        <span className="shrink-0 text-base">💡</span>
         <span>Start every section with an overview, and add lectures sequentially. Videos are uploaded securely to YouTube.</span>
       </div>
 
       {/* Sections */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="flex flex-col gap-4">
         {form.sections.map((section, sIdx) => (
-          <div key={section.id} style={{ background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 12, overflow: 'hidden' }}>
+          <div key={section.id} className="bg-surface-1 border border-hairline rounded-xl overflow-hidden shadow-sm">
             {/* Section header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--surface-2)', borderBottom: '1px solid var(--hairline)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-subtle)', letterSpacing: '0.06em' }}>SECTION {sIdx + 1}</span>
-              <input
-                style={{ ...inputStyle, padding: '6px 10px', fontSize: 13, fontWeight: 600, flex: 1 }}
+            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-surface-2 border-b border-hairline">
+              <span className="text-[11px] font-bold text-ink-subtle tracking-wider shrink-0 hidden sm:block">SECTION {sIdx + 1}</span>
+              <span className="text-[11px] font-bold text-ink-subtle tracking-wider shrink-0 sm:hidden">S{sIdx + 1}</span>
+              <FocusInput
+                className="flex-1 py-1.5 sm:py-2 text-[13px] font-semibold"
                 value={section.title}
                 onChange={e => updateSection(section.id, e.target.value)}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--primary)'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'var(--hairline)'; }}
               />
-              <button onClick={() => removeSection(section.id)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: 'var(--surface-3)', color: 'var(--ink-subtle)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button type="button" onClick={() => removeSection(section.id)} className="w-8 h-8 rounded-lg bg-surface-3 text-ink-subtle hover:bg-surface-4 transition-colors cursor-pointer flex items-center justify-center shrink-0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
             {/* Lectures */}
-            <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="p-3 flex flex-col gap-3">
               {section.lectures.map((lecture, lIdx) => (
-                <div key={lecture.id} style={{ background: 'var(--surface-2)', borderRadius: 8, border: '1px solid var(--hairline)', padding: 12 }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-                    <span style={{ fontSize: 11, color: 'var(--ink-subtle)', fontWeight: 600, flexShrink: 0 }}>
+                <div key={lecture.id} className="bg-surface-2 rounded-lg border border-hairline p-3">
+                  <div className="flex gap-2 items-center mb-3">
+                    <span className="text-[11px] text-ink-subtle font-semibold shrink-0">
                       🎬 {lIdx + 1}.
                     </span>
-                    <input
-                      style={{ ...inputStyle, padding: '6px 10px', fontSize: 13, flex: 1 }}
+                    <FocusInput
+                      className="flex-1 py-1.5 text-[13px]"
                       value={lecture.title}
                       onChange={e => updateLecture(section.id, lecture.id, { title: e.target.value })}
                       placeholder="Lecture title..."
-                      onFocus={e => { e.currentTarget.style.borderColor = 'var(--primary)'; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = 'var(--hairline)'; }}
                     />
-                    <button onClick={() => removeLecture(section.id, lecture.id)} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--ink-subtle)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <button type="button" onClick={() => removeLecture(section.id, lecture.id)} className="w-8 h-8 rounded-lg bg-transparent text-ink-subtle hover:text-error hover:bg-error/10 transition-colors cursor-pointer flex items-center justify-center shrink-0">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
                   </div>
@@ -359,10 +332,7 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
                 </div>
               ))}
 
-              <button onClick={() => addLecture(section.id)} style={{ alignSelf: 'flex-start', padding: '7px 14px', borderRadius: 7, border: '1px dashed var(--hairline-strong)', background: 'transparent', color: 'var(--ink-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'color 0.15s, border-color 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget).style.color = 'var(--ink)'; (e.currentTarget).style.borderColor = 'var(--hairline-strong)'; }}
-              onMouseLeave={e => { (e.currentTarget).style.color = 'var(--ink-muted)'; (e.currentTarget).style.borderColor = 'var(--hairline)'; }}
-              >
+              <button type="button" onClick={() => addLecture(section.id)} className="self-start px-3.5 py-1.5 rounded-lg border border-dashed border-hairline-strong bg-transparent text-ink-muted text-xs font-semibold cursor-pointer flex items-center gap-1.5 hover:text-ink hover:border-hairline-strong transition-all mt-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add Lecture
               </button>
@@ -371,10 +341,7 @@ function Step3({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
         ))}
       </div>
 
-      <button onClick={addSection} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--primary)', background: 'rgba(94,106,210,0.08)', color: 'var(--primary)', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s' }}
-      onMouseEnter={e => { (e.currentTarget).style.background = 'rgba(94,106,210,0.16)'; }}
-      onMouseLeave={e => { (e.currentTarget).style.background = 'rgba(94,106,210,0.08)'; }}
-      >
+      <button type="button" onClick={addSection} className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/20 bg-primary/5 text-primary text-[13px] font-bold cursor-pointer hover:bg-primary/10 transition-colors">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Section
       </button>
@@ -404,36 +371,21 @@ function VideoUploadZone({
     setUploading(true);
     setUploadProgress(0);
 
-    // 1. Get Resumable Upload URL from our backend
     fetch('/api/media/upload-url', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        filename: file.name,
-        contentType: file.type,
-        fileSize: file.size,
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, contentType: file.type, fileSize: file.size })
     })
     .then(res => {
-      if (!res.ok) throw new Error('Failed to get upload URL. Are you logged in?');
+      if (!res.ok) throw new Error('Failed to get upload URL.');
       return res.json();
     })
     .then(data => {
-      if (!data.uploadUrl || data.uploadUrl === '') {
-        throw new Error(data.mediaId || 'No upload URL returned (check media-service logs)');
-      }
-
-      // 2. Upload video directly to YouTube Resumable URL using XHR for progress tracking
+      if (!data.uploadUrl) throw new Error(data.mediaId || 'No upload URL returned');
       const xhr = new XMLHttpRequest();
-      
       xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          setUploadProgress((e.loaded / e.total) * 100);
-        }
+        if (e.lengthComputable) setUploadProgress((e.loaded / e.total) * 100);
       });
-      
       xhr.addEventListener('load', () => {
         setUploading(false);
         if (xhr.status === 200 || xhr.status === 201) {
@@ -443,19 +395,13 @@ function VideoUploadZone({
             const finalUrl = videoId ? `https://youtube.com/watch?v=${videoId}` : '';
             onFileSelect(file.name, finalUrl);
           } catch (e) {
-            console.error('Failed to parse YouTube response', e);
             onFileSelect(file.name, '');
           }
         } else {
-          alert('Upload failed with status ' + xhr.status);
+          alert('Upload failed');
         }
       });
-      
-      xhr.addEventListener('error', () => {
-        setUploading(false);
-        alert('Network error during upload');
-      });
-      
+      xhr.addEventListener('error', () => { setUploading(false); alert('Network error'); });
       xhr.open('PUT', data.uploadUrl, true);
       xhr.setRequestHeader('Content-Type', file.type);
       xhr.send(file);
@@ -464,7 +410,6 @@ function VideoUploadZone({
       setUploading(false);
       alert(err.message);
     });
-
   }, [onFileSelect]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -475,13 +420,13 @@ function VideoUploadZone({
 
   if (uploading) {
     return (
-      <div style={{ padding: '14px 16px', background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>Uploading video...</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)' }}>{Math.round(uploadProgress)}%</span>
+      <div className="p-3.5 sm:p-4 bg-surface-1 border border-hairline rounded-lg">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs text-ink-muted">Uploading video...</span>
+          <span className="text-xs font-bold text-primary">{Math.round(uploadProgress)}%</span>
         </div>
-        <div style={{ height: 4, background: 'var(--surface-3)', borderRadius: 999 }}>
-          <div style={{ height: '100%', width: `${uploadProgress}%`, background: 'var(--primary)', borderRadius: 999, transition: 'width 0.1s' }} />
+        <div className="h-1 bg-surface-3 rounded-full overflow-hidden">
+          <div className="h-full bg-primary rounded-full transition-all duration-100 ease-out" style={{ width: `${uploadProgress}%` }} />
         </div>
       </div>
     );
@@ -491,10 +436,10 @@ function VideoUploadZone({
 
   if (displayName) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'rgba(39,166,68,0.08)', border: '1px solid rgba(39,166,68,0.25)', borderRadius: 8 }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="#27a644"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8" stroke="#27a644" strokeWidth="2" fill="none"/><line x1="12" y1="3" x2="12" y2="15" stroke="#27a644" strokeWidth="2"/></svg>
-        <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
-        <button type="button" onClick={() => onFileSelect('', '')} style={{ fontSize: 11, color: 'var(--ink-subtle)', background: 'none', border: 'none', cursor: 'pointer' }}>Change</button>
+      <div className="flex items-center gap-2.5 p-2.5 px-3 bg-success/10 border border-success/25 rounded-lg">
+        <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="#27a644"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8" stroke="#27a644" strokeWidth="2" fill="none"/><line x1="12" y1="3" x2="12" y2="15" stroke="#27a644" strokeWidth="2"/></svg>
+        <span className="text-xs text-success font-medium flex-1 truncate">{displayName}</span>
+        <button type="button" onClick={() => onFileSelect('', '')} className="text-[11px] text-ink-subtle hover:text-ink transition-colors shrink-0">Change</button>
       </div>
     );
   }
@@ -505,22 +450,16 @@ function VideoUploadZone({
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
-      style={{
-        border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--hairline-strong)'}`,
-        borderRadius: 8, padding: '16px 20px',
-        display: 'flex', alignItems: 'center', gap: 10,
-        cursor: 'pointer', transition: 'all 0.15s',
-        background: dragging ? 'rgba(94,106,210,0.07)' : 'transparent',
-      }}
+      className={`border-2 border-dashed rounded-lg p-4 flex flex-col sm:flex-row text-center sm:text-left items-center justify-center sm:justify-start gap-3 cursor-pointer transition-all ${dragging ? 'border-primary bg-primary/5' : 'border-hairline-strong hover:bg-surface-2'}`}
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-subtle)" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <svg className="shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path className="text-ink-subtle" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline className="text-ink-subtle" points="17 8 12 3 7 8"/><line className="text-ink-subtle" x1="12" y1="3" x2="12" y2="15"/></svg>
       <div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)' }}>
+        <div className="text-xs font-semibold text-ink-muted mb-0.5">
           {dragging ? 'Drop video here' : 'Upload video'}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--ink-subtle)' }}>Drag & drop or click · MP4, MOV, AVI</div>
+        <div className="text-[11px] text-ink-subtle">Drag & drop or click · MP4, MOV, AVI</div>
       </div>
-      <input ref={inputRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+      <input ref={inputRef} type="file" accept="video/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
     </div>
   );
 }
@@ -536,24 +475,24 @@ function Step4({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="flex flex-col gap-6">
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.03em', marginBottom: 6 }}>Publish Your Course</h2>
-        <p style={{ fontSize: 14, color: 'var(--ink-subtle)' }}>A great thumbnail and clear pricing will maximize your course enrollments.</p>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight mb-1.5">Publish Your Course</h2>
+        <p className="text-sm text-ink-subtle">A great thumbnail and clear pricing will maximize your course enrollments.</p>
       </div>
 
       {/* Thumbnail */}
       <Field label="Course Thumbnail" required hint="Upload a 16:9 image (1280×720 minimum). High-quality visuals dramatically increase click-through rate.">
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start w-full">
           {/* Preview */}
-          <div style={{ width: 240, height: 135, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--hairline)', background: 'var(--surface-2)', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-full sm:w-[240px] aspect-video sm:h-[135px] rounded-xl overflow-hidden border border-hairline bg-surface-2 shrink-0 relative flex items-center justify-center shadow-sm">
             {form.thumbnailPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={form.thumbnailPreview} alt="Thumbnail preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={form.thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
             ) : (
-              <div style={{ textAlign: 'center', color: 'var(--ink-subtle)' }}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>🖼️</div>
-                <div style={{ fontSize: 11 }}>Preview</div>
+              <div className="text-center text-ink-subtle">
+                <div className="text-2xl mb-1.5">🖼️</div>
+                <div className="text-[11px]">Preview</div>
               </div>
             )}
           </div>
@@ -563,50 +502,39 @@ function Step4({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
             onDragOver={e => { e.preventDefault(); setThumbDragging(true); }}
             onDragLeave={() => setThumbDragging(false)}
             onDrop={e => { e.preventDefault(); setThumbDragging(false); if (e.dataTransfer.files[0]) handleThumbnail(e.dataTransfer.files[0]); }}
-            style={{
-              flex: 1, border: `2px dashed ${thumbDragging ? 'var(--primary)' : 'var(--hairline-strong)'}`,
-              borderRadius: 10, padding: '28px 20px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 8, cursor: 'pointer', transition: 'all 0.15s',
-              background: thumbDragging ? 'rgba(94,106,210,0.07)' : 'transparent',
-            }}
+            className={`flex-1 w-full border-2 border-dashed rounded-xl py-8 px-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${thumbDragging ? 'border-primary bg-primary/5' : 'border-hairline-strong hover:bg-surface-2'}`}
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink-subtle)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-muted)' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ink-subtle"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div className="text-[13px] font-semibold text-ink-muted">
               {thumbDragging ? 'Drop image here' : 'Click or drag image here'}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ink-subtle)', textAlign: 'center' }}>JPG, PNG, WebP · Max 5MB · 1280×720 recommended</div>
-            <input ref={thumbInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { if (e.target.files?.[0]) handleThumbnail(e.target.files[0]); }} />
+            <div className="text-[11px] text-ink-subtle text-center">JPG, PNG, WebP · Max 5MB · 1280×720 recommended</div>
+            <input ref={thumbInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleThumbnail(e.target.files[0]); }} />
           </div>
         </div>
       </Field>
 
       {/* Pricing */}
       <Field label="Pricing" required>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div className="flex flex-col sm:flex-row gap-3">
           {(['free', 'paid'] as const).map(type => (
-            <button key={type} onClick={() => setForm(prev => ({ ...prev, pricing: type }))} style={{
-              flex: 1, padding: '16px 20px', borderRadius: 10,
-              border: `2px solid ${form.pricing === type ? 'var(--primary)' : 'var(--hairline)'}`,
-              background: form.pricing === type ? 'rgba(94,106,210,0.1)' : 'var(--surface-2)',
-              cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left',
-            }}>
-              <div style={{ fontSize: 16, marginBottom: 4 }}>{type === 'free' ? '🆓' : '💳'}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: form.pricing === type ? 'var(--primary)' : 'var(--ink)', textTransform: 'capitalize' }}>{type}</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-subtle)', marginTop: 2 }}>
+            <button key={type} type="button" onClick={() => setForm(prev => ({ ...prev, pricing: type }))} className={`flex-1 p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${form.pricing === type ? 'border-primary bg-primary/10' : 'border-hairline bg-surface-2 hover:border-hairline-strong'}`}>
+              <div className="text-base mb-1">{type === 'free' ? '🆓' : '💳'}</div>
+              <div className={`text-sm font-bold capitalize ${form.pricing === type ? 'text-primary' : 'text-ink'}`}>{type}</div>
+              <div className="text-xs text-ink-subtle mt-0.5">
                 {type === 'free' ? 'Make it accessible to everyone' : 'Set a price for your course'}
               </div>
             </button>
           ))}
         </div>
         {form.pricing === 'paid' && (
-          <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-muted)', marginBottom: 6 }}>Course Price (USD)</div>
-            <div style={{ position: 'relative', maxWidth: 200 }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-subtle)', fontSize: 14, fontWeight: 600 }}>$</span>
-              <FocusInput type="number" value={form.price} onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))} placeholder="29.99" style={{ paddingLeft: 28 }} min="0" step="0.01" />
+          <div className="mt-3">
+            <div className="text-[13px] font-semibold text-ink-muted mb-1.5">Course Price (USD)</div>
+            <div className="relative max-w-[200px]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-subtle text-sm font-semibold">$</span>
+              <FocusInput type="number" value={form.price} onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))} placeholder="29.99" className="pl-7" min="0" step="0.01" />
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 6 }}>Suggested: $9.99 – $199.99</div>
+            <div className="text-[11px] text-ink-subtle mt-1.5">Suggested: $9.99 – $199.99</div>
           </div>
         )}
       </Field>
@@ -617,9 +545,9 @@ function Step4({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
       </Field>
 
       {/* Summary */}
-      <div style={{ background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 12, padding: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', marginBottom: 14 }}>Course Summary</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="bg-surface-1 border border-hairline rounded-xl p-5 shadow-sm">
+        <div className="text-sm font-bold text-ink mb-3.5">Course Summary</div>
+        <div className="flex flex-col gap-2">
           {[
             { label: 'Title', value: form.title || '—' },
             { label: 'Category', value: form.category || '—' },
@@ -628,9 +556,9 @@ function Step4({ form, setForm }: { form: CourseForm; setForm: React.Dispatch<Re
             { label: 'Total Lectures', value: `${form.sections.reduce((acc, s) => acc + s.lectures.length, 0)}` },
             { label: 'Pricing', value: form.pricing === 'free' ? 'Free' : (form.price ? `$${form.price}` : 'Paid (price not set)') },
           ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--hairline)' }}>
-              <span style={{ fontSize: 12, color: 'var(--ink-subtle)' }}>{item.label}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', maxWidth: '65%', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.value}</span>
+            <div key={i} className="flex justify-between py-1.5 border-b border-hairline last:border-0">
+              <span className="text-xs text-ink-subtle">{item.label}</span>
+              <span className="text-xs font-semibold text-ink max-w-[65%] text-right truncate">{item.value}</span>
             </div>
           ))}
         </div>
@@ -763,9 +691,7 @@ export default function CreateCoursePage() {
     try {
       const response = await fetch('/api/courses', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.title,
           subtitle: form.subtitle,
@@ -788,9 +714,7 @@ export default function CreateCoursePage() {
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create course');
-      }
+      if (!response.ok) throw new Error('Failed to create course');
 
       setSubmitting(false);
       setSubmitted(true);
@@ -803,19 +727,19 @@ export default function CreateCoursePage() {
 
   if (submitted) {
     return (
-      <div style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center' }}>
-        <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.04em', marginBottom: 12 }}>
+      <div className="max-w-[600px] mx-auto mt-20 text-center px-4">
+        <div className="text-6xl mb-5">🎉</div>
+        <h1 className="text-3xl font-extrabold text-ink tracking-tight mb-3">
           Course Submitted!
         </h1>
-        <p style={{ fontSize: 15, color: 'var(--ink-muted)', marginBottom: 32 }}>
-          Your course <strong>"{form.title}"</strong> is under review. We'll notify you once it goes live. This usually takes 1-2 business days.
+        <p className="text-[15px] text-ink-muted mb-8 leading-relaxed">
+          Your course <strong className="text-ink">"{form.title}"</strong> is under review. We'll notify you once it goes live. This usually takes 1-2 business days.
         </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button onClick={() => router.push('/courses')} style={{ padding: '11px 24px', borderRadius: 10, background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }}>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button onClick={() => router.push('/courses')} className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm border-none cursor-pointer shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
             View My Courses
           </button>
-          <button onClick={() => { setSubmitted(false); setStep(1); setForm(defaultForm); }} style={{ padding: '11px 24px', borderRadius: 10, background: 'var(--surface-2)', color: 'var(--ink)', fontWeight: 600, fontSize: 14, border: '1px solid var(--hairline)', cursor: 'pointer' }}>
+          <button onClick={() => { setSubmitted(false); setStep(1); setForm(defaultForm); }} className="px-6 py-3 rounded-xl bg-surface-2 text-ink font-semibold text-sm border border-hairline cursor-pointer hover:bg-surface-3 transition-colors w-full sm:w-auto">
             Create Another
           </button>
         </div>
@@ -831,54 +755,50 @@ export default function CreateCoursePage() {
   }).map(s => s.id);
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+    <div className="max-w-[1000px] mx-auto w-full pb-10">
 
       {/* Page title row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
-        <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--hairline)', background: 'var(--surface-2)', color: 'var(--ink-subtle)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1 }}>
-            Create New Course
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="w-9 h-9 rounded-xl border border-hairline bg-surface-2 text-ink-subtle cursor-pointer flex items-center justify-center shrink-0 hover:bg-surface-3 transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight leading-none">
+            Create Course
           </h1>
         </div>
-        {/* Top progress */}
-        <div style={{ flex: 1, display: 'flex', gap: 6, marginLeft: 20 }}>
+        {/* Top progress (hidden on desktop, uses horizontal bar) */}
+        <div className="flex-1 flex gap-1.5 sm:ml-4">
           {STEPS.map(s => (
-            <div key={s.id} onClick={() => setStep(s.id)} style={{ flex: 1, height: 4, borderRadius: 999, background: step >= s.id ? 'var(--primary)' : 'var(--surface-2)', cursor: 'pointer', transition: 'background 0.3s' }} />
+            <div key={s.id} onClick={() => setStep(s.id)} className={`flex-1 h-1.5 rounded-full cursor-pointer transition-colors ${step >= s.id ? 'bg-primary' : 'bg-surface-2 hover:bg-surface-3'}`} />
           ))}
         </div>
       </div>
 
       {/* Content: sidebar + form */}
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 24 }}>
+      <div className="flex flex-col lg:grid lg:grid-cols-[240px_1fr] gap-6 sm:gap-8">
 
-        {/* Step list sidebar */}
-        <aside>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 12, overflow: 'hidden', position: 'sticky', top: 24 }}>
+        {/* Step list sidebar - horizontal on mobile, vertical on desktop */}
+        <aside className="w-full">
+          <div className="flex lg:flex-col lg:sticky lg:top-6 bg-surface-1 border border-hairline rounded-2xl overflow-x-auto lg:overflow-hidden scrollbar-hide shadow-sm p-1.5 lg:p-0">
             {STEPS.map((s, i) => {
               const isDone = completedSteps.includes(s.id);
               const isActive = step === s.id;
               return (
-                <button key={s.id} onClick={() => setStep(s.id)} style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '14px 16px', background: isActive ? 'rgba(94,106,210,0.1)' : 'transparent',
-                  border: 'none', borderBottom: i < STEPS.length - 1 ? '1px solid var(--hairline)' : 'none',
-                  cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s',
-                }}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-                    background: isDone ? 'var(--success)' : isActive ? 'var(--primary)' : 'var(--surface-2)',
-                    border: `2px solid ${isDone ? 'var(--success)' : isActive ? 'var(--primary)' : 'var(--hairline)'}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, color: isDone || isActive ? '#fff' : 'var(--ink-subtle)',
-                  }}>
+                <button key={s.id} onClick={() => setStep(s.id)} className={`
+                  flex items-center gap-3 py-2 px-3 lg:p-4 border-none cursor-pointer text-left transition-all shrink-0 lg:shrink whitespace-nowrap lg:whitespace-normal rounded-xl lg:rounded-none
+                  ${isActive ? 'bg-primary/10' : 'bg-transparent hover:bg-surface-2'}
+                  ${i < STEPS.length - 1 ? 'lg:border-b lg:border-hairline' : ''}
+                `}>
+                  <div className={`
+                    w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold transition-colors
+                    ${isDone ? 'bg-success border-2 border-success text-white' : isActive ? 'bg-primary border-2 border-primary text-white' : 'bg-surface-2 border-2 border-hairline text-ink-subtle'}
+                  `}>
                     {isDone ? '✓' : s.id}
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: isActive ? 'var(--primary)' : 'var(--ink-muted)' }}>{s.title}</div>
-                    <div style={{ fontSize: 11, color: 'var(--ink-subtle)' }}>{s.desc}</div>
+                    <div className={`text-[13px] font-bold ${isActive ? 'text-primary' : 'text-ink-muted'}`}>{s.title}</div>
+                    <div className="text-[11px] text-ink-subtle hidden lg:block mt-0.5">{s.desc}</div>
                   </div>
                 </button>
               );
@@ -887,9 +807,9 @@ export default function CreateCoursePage() {
         </aside>
 
         {/* Main form area */}
-        <div>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 14, padding: 28, marginBottom: 20, boxShadow: 'inset 0 1px 0 rgba(255,255,200,0.05)', minHeight: 500 }}>
-            <div key={step} style={{ animation: 'slideIn 0.2s ease' }}>
+        <div className="flex flex-col min-w-0">
+          <div className="bg-surface-1 border border-hairline rounded-2xl p-5 sm:p-8 mb-6 shadow-sm min-h-[500px]">
+            <div key={step} className="animate-in fade-in slide-in-from-right-4 duration-300">
               {step === 1 && <Step1 form={form} setForm={setForm} />}
               {step === 2 && <Step2 form={form} setForm={setForm} />}
               {step === 3 && <Step3 form={form} setForm={setForm} />}
@@ -898,61 +818,39 @@ export default function CreateCoursePage() {
           </div>
 
           {/* Navigation buttons */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={handleBack} disabled={step === 1} style={{
-              padding: '10px 22px', borderRadius: 10, border: '1px solid var(--hairline)',
-              background: 'var(--surface-2)', color: step === 1 ? 'var(--ink-subtle)' : 'var(--ink)',
-              fontWeight: 600, fontSize: 14, cursor: step === 1 ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: 8, opacity: step === 1 ? 0.4 : 1,
-            }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          <div className="sticky bottom-0 z-20 bg-black sm:bg-transparent -mx-4 px-4 pb-6 pt-4 sm:mx-0 sm:px-0 sm:pb-0 sm:pt-6 border-t border-hairline flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
+            <button onClick={handleBack} disabled={step === 1} className={`
+              px-5 py-2.5 rounded-xl border border-hairline bg-surface-2 font-semibold text-sm flex items-center justify-center gap-2 w-full sm:w-auto transition-colors
+              ${step === 1 ? 'text-ink-subtle cursor-not-allowed opacity-50' : 'text-ink cursor-pointer hover:bg-surface-3'}
+            `}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Back
             </button>
 
-            <div style={{ fontSize: 12, color: 'var(--ink-subtle)' }}>Step {step} of {STEPS.length}</div>
+            <div className="text-xs font-semibold text-ink-subtle hidden sm:block">Step {step} of {STEPS.length}</div>
 
             {step < 4 ? (
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={handleSaveDraft} style={{
-                  padding: '10px 22px', borderRadius: 10, border: '1px solid var(--hairline-strong)',
-                  background: 'transparent', color: 'var(--ink-muted)',
-                  fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}>
+              <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
+                <button onClick={handleSaveDraft} className="px-5 py-2.5 rounded-xl border border-hairline-strong bg-transparent text-ink-muted font-semibold text-sm cursor-pointer hover:bg-surface-2 transition-colors w-full sm:w-auto">
                   Save Draft
                 </button>
-                <button onClick={handleNext} style={{
-                  padding: '10px 22px', borderRadius: 10, border: 'none',
-                  background: 'var(--primary)', color: '#fff',
-                  fontWeight: 700, fontSize: 14, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  boxShadow: '0 4px 16px rgba(94,106,210,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
-                }}>
+                <button onClick={handleNext} className="px-6 py-2.5 rounded-xl border-none bg-primary text-white font-bold text-sm cursor-pointer flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all w-full sm:w-auto">
                   Continue
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={handleSaveDraft} disabled={submitting} style={{
-                  padding: '10px 22px', borderRadius: 10, border: '1px solid var(--hairline-strong)',
-                  background: 'transparent', color: 'var(--ink-muted)',
-                  fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                  transition: 'all 0.15s', opacity: submitting ? 0.5 : 1
-                }}>
+              <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
+                <button onClick={handleSaveDraft} disabled={submitting} className={`px-5 py-2.5 rounded-xl border border-hairline-strong bg-transparent text-ink-muted font-semibold text-sm cursor-pointer hover:bg-surface-2 transition-colors w-full sm:w-auto ${submitting ? 'opacity-50' : ''}`}>
                   Save Draft
                 </button>
-                <button onClick={handleSubmit} disabled={submitting} style={{
-                  padding: '10px 28px', borderRadius: 10, border: 'none',
-                  background: submitting ? 'var(--surface-2)' : 'var(--success)',
-                  color: submitting ? 'var(--ink-subtle)' : '#fff',
-                  fontWeight: 700, fontSize: 14, cursor: submitting ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  boxShadow: submitting ? 'none' : '0 4px 16px rgba(39,166,68,0.35)',
-                }}>
+                <button onClick={handleSubmit} disabled={submitting} className={`
+                  px-7 py-2.5 rounded-xl border-none font-bold text-sm flex items-center justify-center gap-2 w-full sm:w-auto transition-all
+                  ${submitting ? 'bg-surface-2 text-ink-subtle cursor-not-allowed' : 'bg-success text-white cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5'}
+                `}>
                   {submitting ? (
                     <>
-                      <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Submitting...
                     </>
                   ) : (
@@ -964,12 +862,6 @@ export default function CreateCoursePage() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 }
-

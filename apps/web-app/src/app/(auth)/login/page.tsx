@@ -18,9 +18,10 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   );
 }
 
-function PremiumInput({ type, placeholder, value, onChange, name }: {
+function PremiumInput({ type, placeholder, value, onChange, name, autoComplete }: {
   type: string; placeholder: string; value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; name: string;
+  autoComplete?: string;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -32,6 +33,7 @@ function PremiumInput({ type, placeholder, value, onChange, name }: {
       onChange={onChange}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
+      autoComplete={autoComplete}
       required
       style={{
         width: '100%', padding: '11px 14px',
@@ -55,7 +57,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,16 +103,16 @@ export default function LoginPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} autoComplete="off">
         <Field label="Email address">
-          <PremiumInput type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} />
+          <PremiumInput type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} autoComplete="off" />
         </Field>
         <Field label="Password">
-          <PremiumInput type="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} />
+          <PremiumInput type="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} autoComplete="new-password" />
         </Field>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, marginTop: -4 }}>
-          <Link href="#" style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 500 }}>
+          <Link href="/forgot-password" style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 500 }}>
             Forgot password?
           </Link>
         </div>

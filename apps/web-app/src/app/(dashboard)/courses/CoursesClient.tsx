@@ -7,9 +7,9 @@ import Link from 'next/link';
 // ─── Shared Primitives ────────────────────────────────────────────────────────
 
 function Stars({ rating }: { rating: number }) {
-  if (!rating) return <span style={{ fontSize: 11, color: 'var(--ink-ghost)' }}>No ratings yet</span>;
+  if (!rating) return <span className="text-[11px] text-ink-ghost">No ratings yet</span>;
   return (
-    <span style={{ display: 'inline-flex', gap: 2, alignItems: 'center' }}>
+    <span className="inline-flex gap-0.5 items-center">
       {[1, 2, 3, 4, 5].map((i) => (
         <svg
           key={i}
@@ -23,16 +23,16 @@ function Stars({ rating }: { rating: number }) {
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
       ))}
-      <span style={{ color: '#f59e0b', fontSize: 11, fontWeight: 700, marginLeft: 3 }}>{rating}</span>
+      <span className="text-[#f59e0b] text-[11px] font-bold ml-1">{rating}</span>
     </span>
   );
 }
 
 function ProgressBar({ value }: { value: number }) {
-  const color = value >= 100 ? 'var(--success)' : value >= 60 ? 'var(--primary)' : 'var(--warning)';
+  const color = value >= 100 ? 'bg-success' : value >= 60 ? 'bg-primary' : 'bg-warning';
   return (
-    <div style={{ height: 5, background: 'var(--surface-4)', borderRadius: 999, overflow: 'hidden' }}>
-      <div style={{ height: '100%', width: `${value}%`, background: color, borderRadius: 999, transition: 'width 0.4s ease' }} />
+    <div className="h-1.5 bg-surface-4 rounded-full overflow-hidden">
+      <div className={`h-full ${color} rounded-full transition-all duration-500 ease-out`} style={{ width: `${value}%` }} />
     </div>
   );
 }
@@ -41,32 +41,17 @@ function FilterPill({ label, active, onClick, count }: { label: string; active: 
   return (
     <button
       onClick={onClick}
-      style={{
-        padding: '6px 14px',
-        borderRadius: 999,
-        cursor: 'pointer',
-        background: active ? 'var(--primary)' : 'var(--surface-2)',
-        color: active ? '#fff' : 'var(--ink-subtle)',
-        fontSize: 13,
-        fontWeight: 600,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        transition: 'all 0.15s',
-        boxShadow: active ? '0 2px 12px rgba(94,106,210,0.4)' : 'none',
-        border: active ? 'none' : '1px solid var(--hairline)',
-      }}
+      className={`
+        px-3.5 py-1.5 rounded-full cursor-pointer text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all
+        ${active 
+          ? 'bg-primary text-white shadow-[0_2px_12px_rgba(94,106,210,0.4)] border border-transparent' 
+          : 'bg-surface-2 text-ink-subtle border border-hairline hover:bg-surface-3 hover:text-ink'}
+      `}
     >
       {label}
       {count !== undefined && (
         <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            padding: '1px 6px',
-            borderRadius: 999,
-            background: active ? 'rgba(255,255,255,0.2)' : 'var(--surface-3)',
-          }}
+          className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-surface-3'}`}
         >
           {count}
         </span>
@@ -75,11 +60,31 @@ function FilterPill({ label, active, onClick, count }: { label: string; active: 
   );
 }
 
+function CourseSkeleton() {
+  return (
+    <div className="bg-surface-1 border border-hairline rounded-2xl overflow-hidden flex flex-col h-[360px] animate-pulse">
+      <div className="w-full aspect-video bg-surface-3" />
+      <div className="p-4 flex-1 flex flex-col gap-3">
+        <div className="h-5 bg-surface-3 rounded-md w-3/4" />
+        <div className="h-3 bg-surface-3 rounded-md w-1/3" />
+        <div className="mt-4 h-2 bg-surface-3 rounded-full w-full" />
+        <div className="flex justify-between">
+          <div className="h-3 bg-surface-3 rounded-md w-1/4" />
+          <div className="h-3 bg-surface-3 rounded-md w-1/6" />
+        </div>
+        <div className="mt-auto flex gap-2">
+          <div className="h-9 bg-surface-3 rounded-lg flex-1" />
+          <div className="h-9 bg-surface-3 rounded-lg w-20" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Student View ─────────────────────────────────────────────────────────────
 
 function StudentCourses() {
   const [filter, setFilter] = useState<'all' | 'in-progress' | 'completed'>('all');
-  const [hovered, setHovered] = useState<string | null>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -121,19 +126,10 @@ function StudentCourses() {
     return c.status === filter;
   });
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 220, gap: 12, color: 'var(--ink-subtle)' }}>
-        <div style={{ width: 24, height: 24, border: '2px solid var(--hairline-strong)', borderTopColor: 'var(--primary)', borderRadius: '50%' }} className="animate-spin" />
-        Loading your enrolled courses...
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
+      <div className="flex gap-2 mb-7 flex-wrap">
         <FilterPill label="All Courses" active={filter === 'all'} onClick={() => setFilter('all')} count={courses.length} />
         <FilterPill
           label="In Progress"
@@ -150,190 +146,99 @@ function StudentCourses() {
       </div>
 
       {/* Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-        {filtered.map((course) => {
-          const isHovered = hovered === course.id;
-          return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {loading ? (
+          <>
+            <CourseSkeleton />
+            <CourseSkeleton />
+            <CourseSkeleton />
+            <CourseSkeleton />
+          </>
+        ) : filtered.length > 0 ? (
+          filtered.map((course) => (
             <div
               key={course.id}
-              onMouseEnter={() => setHovered(course.id)}
-              onMouseLeave={() => setHovered(null)}
-              style={{
-                background: 'var(--surface-1)',
-                border: `1px solid ${isHovered ? 'var(--hairline-strong)' : 'var(--hairline)'}`,
-                borderRadius: 16,
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                transform: isHovered ? 'translateY(-4px)' : 'none',
-                boxShadow: isHovered ? '0 16px 48px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.3)',
-                transition: 'transform 0.2s, border-color 0.15s, box-shadow 0.2s',
-              }}
+              className="group bg-surface-1 border border-hairline rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 hover:border-hairline-strong hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] transition-all duration-200"
             >
               {/* Thumbnail with direct link to player */}
-              <Link href={`/courses/${course.id}/learn`} style={{ textDecoration: 'none', display: 'block' }}>
-                <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', background: 'var(--surface-3)', cursor: 'pointer' }}>
-                  <Image src={course.thumbnail} alt={course.title} fill style={{ objectFit: 'cover' }} sizes="380px" />
+              <Link href={`/courses/${course.id}/learn`} className="block relative w-full aspect-video bg-surface-3 cursor-pointer overflow-hidden">
+                <Image src={course.thumbnail} alt={course.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, 380px" />
+                
+                {/* Category chip */}
+                <div className="absolute top-2.5 left-2.5 text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-black/75 text-white backdrop-blur-md tracking-wider uppercase">
+                  {course.category}
+                </div>
 
-                  {/* Category chip */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 10,
-                      left: 10,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      padding: '3px 10px',
-                      borderRadius: 999,
-                      background: 'rgba(0,0,0,0.75)',
-                      color: '#fff',
-                      backdropFilter: 'blur(8px)',
-                      letterSpacing: '0.07em',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {course.category}
+                {/* Completed badge */}
+                {course.status === 'completed' && (
+                  <div className="absolute top-2.5 right-2.5 text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-success/90 text-black tracking-widest uppercase">
+                    ✓ Completed
                   </div>
+                )}
 
-                  {/* Completed badge */}
-                  {course.status === 'completed' && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 10,
-                        right: 10,
-                        fontSize: 10,
-                        fontWeight: 800,
-                        padding: '3px 10px',
-                        borderRadius: 999,
-                        background: 'rgba(74,222,128,0.9)',
-                        color: '#000',
-                        letterSpacing: '0.04em',
-                      }}
-                    >
-                      ✓ Completed
-                    </div>
-                  )}
-
-                  {/* Hover overlay */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'rgba(0,0,0,0.45)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: isHovered ? 1 : 0,
-                      transition: 'opacity 0.2s',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: '50%',
-                        background: 'rgba(94,106,210,0.95)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 0 0 8px rgba(94,106,210,0.2)',
-                      }}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                    </div>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="w-12 h-12 rounded-full bg-primary/95 flex items-center justify-center shadow-[0_0_0_6px_rgba(94,106,210,0.2)]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" className="ml-1">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
                   </div>
                 </div>
               </Link>
 
               {/* Body */}
-              <div style={{ padding: '18px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Link href={`/courses/${course.id}/learn`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: 'var(--ink)',
-                      marginBottom: 6,
-                      lineHeight: 1.35,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {course.title}
-                  </div>
+              <div className="p-4 flex-1 flex flex-col">
+                <Link href={`/courses/${course.id}/learn`} className="text-base font-bold text-ink mb-1.5 leading-snug hover:text-primary transition-colors line-clamp-2">
+                  {course.title}
                 </Link>
 
-                <div style={{ fontSize: 12, color: 'var(--ink-subtle)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="text-xs text-ink-subtle mb-3.5 flex items-center gap-2">
                   <span>{course.instructor}</span>
-                  <span style={{ color: 'var(--hairline-strong)' }}>·</span>
+                  <span className="text-hairline-strong">·</span>
                   <Stars rating={course.rating} />
                 </div>
 
                 {/* Progress */}
                 <ProgressBar value={course.progress} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
-                  <span style={{ fontSize: 12, color: 'var(--ink-subtle)' }}>
+                <div className="flex justify-between items-center mt-2 mb-4">
+                  <span className="text-xs text-ink-subtle">
                     {course.completedLectures}/{course.totalLectures} lectures
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: course.progress === 100 ? 'var(--success)' : 'var(--primary)' }}>
+                  <span className={`text-xs font-bold ${course.progress === 100 ? 'text-success' : 'text-primary'}`}>
                     {course.progress}%
                   </span>
                 </div>
 
                 {/* Actions */}
-                <div style={{ marginTop: 'auto', display: 'flex', gap: 8 }}>
+                <div className="mt-auto flex gap-2">
                   <Link
                     href={`/courses/${course.id}/learn`}
-                    style={{
-                      flex: 1,
-                      padding: '10px 0',
-                      borderRadius: 10,
-                      background: course.status === 'completed' ? 'var(--surface-3)' : 'var(--primary)',
-                      color: course.status === 'completed' ? 'var(--ink-muted)' : '#fff',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      letterSpacing: '-0.01em',
-                      textAlign: 'center',
-                      textDecoration: 'none',
-                      boxShadow: course.status === 'completed' ? 'none' : '0 2px 12px rgba(94,106,210,0.3)',
-                    }}
+                    className={`
+                      flex-1 py-2 rounded-lg text-[13px] font-bold text-center transition-all
+                      ${course.status === 'completed' 
+                        ? 'bg-surface-3 text-ink-muted hover:bg-surface-4' 
+                        : 'bg-primary text-white shadow-glow hover:bg-primary-light hover:-translate-y-0.5'}
+                    `}
                   >
-                    {course.status === 'completed' ? '↺ Review Lectures' : '▶ Watch Lectures'}
+                    {course.status === 'completed' ? '↺ Review' : '▶ Watch'}
                   </Link>
                   <Link
                     href={`/courses/${course.id}`}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: 10,
-                      border: '1px solid var(--hairline)',
-                      background: 'var(--surface-2)',
-                      color: 'var(--ink-muted)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    title="Course Overview & Curriculum"
+                    className="px-3.5 py-2 rounded-lg border border-hairline bg-surface-2 text-ink-muted text-[13px] font-semibold flex items-center justify-center hover:bg-surface-3 transition-colors"
+                    title="Course Overview"
                   >
-                    📖 Details
+                    📖
                   </Link>
                 </div>
               </div>
             </div>
-          );
-        })}
-
-        {filtered.length === 0 && (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 8, letterSpacing: '-0.02em' }}>No courses here yet</div>
-            <div style={{ fontSize: 14, color: 'var(--ink-subtle)' }}>
-              <Link href="/catalog" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-20">
+            <div className="text-5xl mb-4">📚</div>
+            <div className="text-lg font-bold text-ink mb-2 tracking-tight">No courses here yet</div>
+            <div className="text-sm text-ink-subtle">
+              <Link href="/catalog" className="text-primary font-semibold hover:underline">
                 Browse the catalog
               </Link>{' '}
               to find and enroll in your next course.
@@ -351,7 +256,6 @@ function InstructorCourses() {
   const [filter, setFilter] = useState<'all' | 'Published' | 'Draft'>('all');
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/courses/instructor/my-courses')
@@ -383,170 +287,95 @@ function InstructorCourses() {
 
   const filtered = filter === 'all' ? courses : courses.filter((c) => c.status === filter);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 220, gap: 12, color: 'var(--ink-subtle)' }}>
-        <div style={{ width: 24, height: 24, border: '2px solid var(--hairline-strong)', borderTopColor: 'var(--primary)', borderRadius: '50%' }} className="animate-spin" />
-        Loading your courses...
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 28 }}>
+      <div className="flex gap-2 mb-7 flex-wrap">
         <FilterPill label="All" active={filter === 'all'} onClick={() => setFilter('all')} count={courses.length} />
         <FilterPill label="Published" active={filter === 'Published'} onClick={() => setFilter('Published')} count={courses.filter((c) => c.status === 'Published').length} />
         <FilterPill label="Drafts" active={filter === 'Draft'} onClick={() => setFilter('Draft')} count={courses.filter((c) => c.status === 'Draft').length} />
       </div>
 
       {/* Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-        {/* Create card */}
-        <Link href="/courses/create" style={{ textDecoration: 'none' }}>
-          <div
-            style={{
-              height: '100%',
-              minHeight: 280,
-              border: '2px dashed var(--hairline-strong)',
-              borderRadius: 16,
-              cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-              color: hovered === 'create' ? 'var(--primary)' : 'var(--ink-subtle)',
-              borderColor: hovered === 'create' ? 'var(--primary)' : 'var(--hairline-strong)',
-              background: hovered === 'create' ? 'rgba(94,106,210,0.05)' : 'transparent',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={() => setHovered('create')}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <div style={{ width: 56, height: 56, borderRadius: '50%', border: '2px solid currentColor', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 700 }}>Create New Course</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-subtle)', textAlign: 'center', maxWidth: 180, lineHeight: 1.5 }}>
-              Upload videos, organize curriculum and publish
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        
+        {/* Create card - always visible for instructor */}
+        <Link href="/courses/create" className="group h-full min-h-[300px] border-2 border-dashed border-hairline-strong rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-primary/5 hover:border-primary transition-all p-6 text-center">
+          <div className="w-14 h-14 rounded-full border-2 border-ink-subtle group-hover:border-primary text-ink-subtle group-hover:text-primary flex items-center justify-center transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </div>
+          <div className="text-[15px] font-bold text-ink-subtle group-hover:text-primary transition-colors">Create New Course</div>
+          <div className="text-xs text-ink-muted max-w-[180px] leading-relaxed">
+            Upload videos, organize curriculum and publish
           </div>
         </Link>
 
-        {/* Course cards */}
-        {filtered.map((course) => (
-          <div
-            key={course.id}
-            onMouseEnter={() => setHovered(course.id)}
-            onMouseLeave={() => setHovered(null)}
-            style={{
-              background: 'var(--surface-1)',
-              border: `1px solid ${hovered === course.id ? 'var(--hairline-strong)' : 'var(--hairline)'}`,
-              borderRadius: 16,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              transform: hovered === course.id ? 'translateY(-4px)' : 'none',
-              boxShadow: hovered === course.id ? '0 16px 48px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s',
-            }}
-          >
-            {/* Thumbnail */}
-            <Link href={`/courses/${course.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-              <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', background: 'var(--surface-3)', cursor: 'pointer' }}>
-                <Image src={course.thumbnail} alt={course.title} fill style={{ objectFit: 'cover' }} sizes="350px" />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 10,
-                    right: 10,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    padding: '3px 10px',
-                    borderRadius: 999,
-                    background: course.status === 'Published' ? 'rgba(74,222,128,0.9)' : 'rgba(251,191,36,0.9)',
-                    color: '#000',
-                    letterSpacing: '0.04em',
-                  }}
-                >
+        {loading ? (
+          <>
+            <CourseSkeleton />
+            <CourseSkeleton />
+          </>
+        ) : (
+          filtered.map((course) => (
+            <div
+              key={course.id}
+              className="group bg-surface-1 border border-hairline rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 hover:border-hairline-strong hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] transition-all duration-200"
+            >
+              {/* Thumbnail */}
+              <Link href={`/courses/${course.id}`} className="block relative w-full aspect-video bg-surface-3 cursor-pointer overflow-hidden">
+                <Image src={course.thumbnail} alt={course.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, 380px" />
+                <div className={`
+                  absolute top-2.5 right-2.5 text-[10px] font-extrabold px-2.5 py-1 rounded-full text-black tracking-widest uppercase
+                  ${course.status === 'Published' ? 'bg-success/90' : 'bg-warning/90'}
+                `}>
                   {course.status === 'Published' ? '● Published' : '○ Draft'}
-                </div>
-              </div>
-            </Link>
-
-            {/* Body */}
-            <div style={{ padding: '16px 18px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <Link href={`/courses/${course.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: 12, cursor: 'pointer' }}>
-                  {course.title}
                 </div>
               </Link>
 
-              {/* Metric chips */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--hairline)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.03em' }}>{course.sections} Sec · {course.lectures} Lec</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 2, fontWeight: 500 }}>Curriculum</div>
-                </div>
-                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--hairline)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--success)', letterSpacing: '-0.03em' }}>{course.status}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 2, fontWeight: 500 }}>Visibility</div>
-                </div>
-              </div>
+              {/* Body */}
+              <div className="p-4 flex-1 flex flex-col">
+                <Link href={`/courses/${course.id}`} className="text-[15px] font-bold text-ink leading-snug mb-3 hover:text-primary transition-colors line-clamp-2">
+                  {course.title}
+                </Link>
 
-              {/* Actions */}
-              <div style={{ marginTop: 'auto', display: 'flex', gap: 8 }}>
-                <Link
-                  href={`/courses/${course.id}`}
-                  style={{
-                    flex: 1,
-                    padding: '9px 0',
-                    borderRadius: 10,
-                    border: '1px solid var(--hairline)',
-                    background: 'var(--surface-2)',
-                    color: 'var(--ink)',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Manage Details
-                </Link>
-                <Link
-                  href={`/courses/${course.id}/learn`}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: 10,
-                    border: 'none',
-                    background: 'var(--primary)',
-                    color: '#fff',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    boxShadow: '0 2px 12px rgba(94,106,210,0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  ▶ Player
-                </Link>
+                {/* Metric chips */}
+                <div className="grid grid-cols-2 gap-2 mb-3.5">
+                  <div className="bg-surface-2 border border-hairline rounded-xl p-2.5">
+                    <div className="text-[15px] font-extrabold text-ink tracking-tight">{course.sections} Sec · {course.lectures} Lec</div>
+                    <div className="text-[11px] text-ink-subtle mt-0.5 font-medium">Curriculum</div>
+                  </div>
+                  <div className="bg-surface-2 border border-hairline rounded-xl p-2.5">
+                    <div className="text-[15px] font-extrabold text-success tracking-tight">{course.status}</div>
+                    <div className="text-[11px] text-ink-subtle mt-0.5 font-medium">Visibility</div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-auto flex gap-2">
+                  <Link
+                    href={`/courses/${course.id}`}
+                    className="flex-1 py-2 rounded-lg border border-hairline bg-surface-2 text-ink text-[13px] font-semibold text-center hover:bg-surface-3 transition-colors"
+                  >
+                    Manage Details
+                  </Link>
+                  <Link
+                    href={`/courses/${course.id}/learn`}
+                    className="px-4 py-2 rounded-lg bg-primary text-white text-[13px] font-bold flex items-center justify-center shadow-glow hover:bg-primary-light transition-colors gap-1.5"
+                  >
+                    ▶ Player
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
 
         {/* Empty state for filtered */}
-        {filtered.length === 0 && courses.length > 0 && (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 0', color: 'var(--ink-subtle)', fontSize: 14 }}>
+        {!loading && filtered.length === 0 && courses.length > 0 && (
+          <div className="col-span-full sm:col-span-1 lg:col-span-2 xl:col-span-3 text-center py-16 text-ink-subtle text-sm flex items-center justify-center border border-dashed border-hairline rounded-2xl">
             No {filter === 'Draft' ? 'draft' : 'published'} courses yet.
           </div>
         )}
@@ -561,35 +390,21 @@ export function CoursesClient({ role }: { role: string }) {
   const isInstructor = role === 'INSTRUCTOR' || role === 'instructor';
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div className="max-w-[1200px] mx-auto w-full">
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
         <div>
-          <h1 style={{ fontSize: 30, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.04em', marginBottom: 6 }}>
+          <h1 className="text-3xl font-extrabold text-ink tracking-tight mb-1.5">
             {isInstructor ? 'My Courses' : 'My Learning'}
           </h1>
-          <p style={{ fontSize: 14, color: 'var(--ink-subtle)' }}>
+          <p className="text-sm text-ink-subtle">
             {isInstructor ? 'Manage and track all your published and draft courses.' : 'Pick up where you left off and watch your lectures.'}
           </p>
         </div>
         {isInstructor ? (
           <Link
             href="/courses/create"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 20px',
-              borderRadius: 10,
-              background: 'var(--primary)',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 700,
-              textDecoration: 'none',
-              letterSpacing: '-0.01em',
-              boxShadow: '0 4px 20px rgba(94,106,210,0.4), inset 0 1px 0 rgba(255,255,255,0.12)',
-              flexShrink: 0,
-            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold shadow-glow hover:bg-primary-light hover:-translate-y-0.5 transition-all self-start"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -600,19 +415,7 @@ export function CoursesClient({ role }: { role: string }) {
         ) : (
           <Link
             href="/catalog"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 18px',
-              borderRadius: 10,
-              background: 'var(--surface-2)',
-              border: '1px solid var(--hairline)',
-              color: 'var(--ink)',
-              fontSize: 13,
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-2 border border-hairline text-ink text-[13px] font-semibold hover:bg-surface-3 transition-colors self-start"
           >
             🧭 Browse More Courses
           </Link>

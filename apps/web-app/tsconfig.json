@@ -17,7 +17,8 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@nexus-ed/shared-types": ["../../libs/shared-types/src/index.ts"]
     }
   },
   "include": [

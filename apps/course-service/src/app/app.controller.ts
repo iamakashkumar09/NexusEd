@@ -26,7 +26,8 @@ export class AppController {
 
   @GrpcMethod('CourseService', 'GetInstructorCourses')
   async getInstructorCourses(data: { instructorId: string }) {
-    const courses = await this.appService.getInstructorCourses(data.instructorId);
+    const instructorId = data.instructorId || (data as any).instructorid;
+    const courses = await this.appService.getInstructorCourses(instructorId);
     return { courses };
   }
 
@@ -62,27 +63,37 @@ export class AppController {
 
   @GrpcMethod('CourseService', 'EnrollCourse')
   async enrollCourse(data: { userId: string; courseId: string }) {
-    return this.appService.enrollCourse(data);
+    const userId = data.userId || (data as any).userid;
+    const courseId = data.courseId || (data as any).courseid;
+    return this.appService.enrollCourse({ ...data, userId, courseId });
   }
 
   @GrpcMethod('CourseService', 'GetStudentCourses')
   async getStudentCourses(data: { userId: string }) {
-    const courses = await this.appService.getStudentCourses(data.userId);
+    console.log('GetStudentCourses called with data:', data);
+    const userId = data.userId || (data as any).userid;
+    const courses = await this.appService.getStudentCourses(userId);
     return { courses };
   }
 
   @GrpcMethod('CourseService', 'UpdateLectureProgress')
   async updateLectureProgress(data: { userId: string; courseId: string; lectureId: string; completed: boolean }) {
-    return this.appService.updateLectureProgress(data);
+    const userId = data.userId || (data as any).userid;
+    const courseId = data.courseId || (data as any).courseid;
+    const lectureId = data.lectureId || (data as any).lectureid;
+    return this.appService.updateLectureProgress({ ...data, userId, courseId, lectureId });
   }
 
   @GrpcMethod('CourseService', 'GetCourseProgress')
   async getCourseProgress(data: { userId: string; courseId: string }) {
-    return this.appService.getCourseProgress(data);
+    const userId = data.userId || (data as any).userid;
+    const courseId = data.courseId || (data as any).courseid;
+    return this.appService.getCourseProgress({ ...data, userId, courseId });
   }
 
   @GrpcMethod('CourseService', 'GetStudentStats')
   async getStudentStats(data: { userId: string }) {
-    return this.appService.getStudentStats(data.userId);
+    const userId = data.userId || (data as any).userid;
+    return this.appService.getStudentStats(userId);
   }
 }

@@ -16,17 +16,16 @@ import { AppModule } from './app/app.module';
 
 async function bootstrap() {
   const port = process.env.PORT || 5000;
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-    transport: Transport.GRPC,
-    options: {
-      package: 'auth',
-      protoPath: join(__dirname, '../../../libs/shared/proto/auth.proto'),
-      url: `0.0.0.0:${port}`,
-    },
+  const app = await NestFactory.create(AppModule);
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.REDIS,
+    options: { url: process.env.REDIS_URL || 'redis://localhost:6379' } as any,
   });
 
-  await app.listen();
-  console.log(`Auth Microservice is listening on port ${port}`);
+  await app.startAllMicroservices();
+  await app.listen(port);
+  console.log(`Auth Microservice is listening on port ${port} with Redis connected`);
 }
 
 bootstrap();

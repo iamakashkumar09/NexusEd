@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { MessagePattern } from '@nestjs/microservices';
 import { AppService } from './app.service';
 import { Response } from 'express';
 
@@ -25,7 +25,7 @@ export class AppController {
   }
 
   // =================== gRPC Routes ===================
-  @GrpcMethod('MediaService', 'GetUploadUrl')
+  @MessagePattern('')
   async getUploadUrl(data: { filename: string; contentType: string; fileSize: number }) {
     try {
       const result = await this.appService.getUploadUrl(data);

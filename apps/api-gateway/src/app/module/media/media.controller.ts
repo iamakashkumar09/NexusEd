@@ -1,22 +1,20 @@
 import { Body, Controller, Post, UseGuards, Inject, OnModuleInit } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { AuthGuard } from '@nestjs/passport';
 import { firstValueFrom } from 'rxjs';
 
 @Controller('media')
-export class MediaController implements OnModuleInit {
-  private mediaService: any;
+export class MediaController {
+  
 
-  constructor(@Inject('MEDIA_SERVICE') private client: ClientGrpc) {}
+  constructor(@Inject('MEDIA_SERVICE') private client: ClientProxy) {}
 
-  onModuleInit() {
-    this.mediaService = this.client.getService('MediaService');
-  }
+  
 
   @UseGuards(AuthGuard('jwt'))
   @Post('upload-url')
   async getUploadUrl(@Body() body: { filename: string; contentType: string; fileSize: number }) {
-    const result = await firstValueFrom(this.mediaService.getUploadUrl(body));
+    const result = await firstValueFrom(this.client.send('getUploadUrl', body));
     return result;
   }
 }

@@ -1,18 +1,16 @@
 import { Body, Controller, Get, Param, Post, Put, Req, UseGuards, Inject, OnModuleInit } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { AuthGuard } from '@nestjs/passport';
 import { firstValueFrom } from 'rxjs';
 import { UpdateProgressDto } from './dto/update-progress.dto';
 
 @Controller('courses')
-export class CourseController implements OnModuleInit {
-  private courseService: any;
+export class CourseController {
+  
 
-  constructor(@Inject('COURSE_SERVICE') private client: ClientGrpc) {}
+  constructor(@Inject('COURSE_SERVICE') private client: ClientProxy) {}
 
-  onModuleInit() {
-    this.courseService = this.client.getService('CourseService');
-  }
+  
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
@@ -20,7 +18,7 @@ export class CourseController implements OnModuleInit {
     if (req.user.role !== 'INSTRUCTOR') {
       throw new Error('Forbidden: Only instructors can create courses');
     }
-    const result = await firstValueFrom(this.courseService.createCourse({ ...body, instructorId: req.user.userId }));
+    const result = await firstValueFrom(this.client.send('createCourse', { ...body, instructorId: req.user.userId }));
     return result;
   }
 
@@ -30,7 +28,7 @@ export class CourseController implements OnModuleInit {
     if (req.user.role !== 'INSTRUCTOR') {
       throw new Error('Forbidden: Only instructors can update courses');
     }
-    const result = await firstValueFrom(this.courseService.updateCourse({ ...body, id, instructorId: req.user.userId }));
+    const result = await firstValueFrom(this.client.send('updateCourse', { ...body, id, instructorId: req.user.userId }));
     return result;
   }
 
@@ -40,47 +38,47 @@ export class CourseController implements OnModuleInit {
     if (req.user.role !== 'INSTRUCTOR') {
       throw new Error('Forbidden: Only instructors can view their courses');
     }
-    const result = await firstValueFrom(this.courseService.getInstructorCourses({ instructorId: req.user.userId }));
+    const result = await firstValueFrom(this.client.send('getInstructorCourses', { instructorId: req.user.userId }));
     return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('student/my-courses')
   async getStudentCourses(@Req() req: any) {
-    const result = await firstValueFrom(this.courseService.getStudentCourses({ userId: req.user.userId }));
+    const result = await firstValueFrom(this.client.send('getStudentCourses', { userId: req.user.userId }));
     return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('student/stats')
   async getStudentStats(@Req() req: any) {
-    const result = await firstValueFrom(this.courseService.getStudentStats({ userId: req.user.userId }));
+    const result = await firstValueFrom(this.client.send('getStudentStats', { userId: req.user.userId }));
     return result;
   }
 
   @Get('catalog')
   async getCatalogCourses() {
-    const result = await firstValueFrom(this.courseService.getCatalogCourses({}));
+    const result = await firstValueFrom(this.client.send('getCatalogCourses', {}));
     return result;
   }
 
   @Get(':id')
   async getCourse(@Param('id') id: string) {
-    const result = await firstValueFrom(this.courseService.getCourse({ id }));
+    const result = await firstValueFrom(this.client.send('getCourse', { id }));
     return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/enroll')
   async enrollCourse(@Req() req: any, @Param('id') id: string) {
-    const result = await firstValueFrom(this.courseService.enrollCourse({ userId: req.user.userId, courseId: id }));
+    const result = await firstValueFrom(this.client.send('enrollCourse', { userId: req.user.userId, courseId: id }));
     return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/progress')
   async updateProgress(@Req() req: any, @Param('id') courseId: string, @Body() body: UpdateProgressDto) {
-    const result = await firstValueFrom(this.courseService.updateLectureProgress({ 
+    const result = await firstValueFrom(this.client.send('updateLectureProgress', { 
       userId: req.user.userId, 
       courseId, 
       lectureId: body.lectureId, 
@@ -92,7 +90,7 @@ export class CourseController implements OnModuleInit {
   @UseGuards(AuthGuard('jwt'))
   @Get(':id/progress')
   async getProgress(@Req() req: any, @Param('id') courseId: string) {
-    const result = await firstValueFrom(this.courseService.getCourseProgress({ userId: req.user.userId, courseId }));
+    const result = await firstValueFrom(this.client.send('getCourseProgress', { userId: req.user.userId, courseId }));
     return result;
   }
 }

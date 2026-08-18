@@ -10,34 +10,15 @@ services:
     envVars:
       - key: JWT_SECRET
         value: "super-secret-local-jwt-key"
-      - key: AUTH_SERVICE_HOST
-        fromService:
-          type: web
-          name: auth-service
-          property: host
-      - key: USER_SERVICE_HOST
-        fromService:
-          type: web
-          name: user-service
-          property: host
-      - key: COURSE_SERVICE_HOST
-        fromService:
-          type: web
-          name: course-service
-          property: host
-      - key: MEDIA_SERVICE_HOST
-        fromService:
-          type: web
-          name: media-service
-          property: host
+      - key: REDIS_URL
+        value: "rediss://default:gQAAAAAAAnvTAAIgcDFlMmI5MzIxY2YwZWU0NDBjYTY2N2M4ZjhhOTdkNTQyNw@tops-terrier-162771.upstash.io:6379"
 
-  # ─── Hybrid Web Services (gRPC + HTTP) ─────────────────────────────────
+  # ─── Redis Microservices ─────────────────────────────────
   - type: web
     name: auth-service
-    protocol: http2
-    healthCheckPath: ""
     plan: free
     env: node
+    healthCheckPath: ""
     buildCommand: npm install && npx nx build auth-service
     startCommand: node dist/apps/auth-service/main.js
     envVars:
@@ -53,47 +34,47 @@ services:
         value: "iamakashkumar2007@gmail.com"
       - key: SMTP_PASS
         value: "trgzecgkbbeobfgk"
-      - key: USER_SERVICE_HOST
-        fromService:
-          type: web
-          name: user-service
-          property: host
+      - key: REDIS_URL
+        value: "rediss://default:gQAAAAAAAnvTAAIgcDFlMmI5MzIxY2YwZWU0NDBjYTY2N2M4ZjhhOTdkNTQyNw@tops-terrier-162771.upstash.io:6379"
 
   - type: web
     name: user-service
-    protocol: http2
-    healthCheckPath: ""
     plan: free
     env: node
+    healthCheckPath: ""
     buildCommand: npm install && npx nx build user-service
     startCommand: node dist/apps/user-service/main.js
     envVars:
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/Userdb?sslmode=require&uselibpqcompat=true&channel_binding=require"
+      - key: REDIS_URL
+        value: "rediss://default:gQAAAAAAAnvTAAIgcDFlMmI5MzIxY2YwZWU0NDBjYTY2N2M4ZjhhOTdkNTQyNw@tops-terrier-162771.upstash.io:6379"
 
   - type: web
     name: course-service
-    protocol: http2
-    healthCheckPath: ""
     plan: free
     env: node
+    healthCheckPath: ""
     buildCommand: npm install && npx nx build course-service
     startCommand: node dist/apps/course-service/main.js
     envVars:
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/CourseDB?sslmode=require&channel_binding=require"
+      - key: REDIS_URL
+        value: "rediss://default:gQAAAAAAAnvTAAIgcDFlMmI5MzIxY2YwZWU0NDBjYTY2N2M4ZjhhOTdkNTQyNw@tops-terrier-162771.upstash.io:6379"
 
   - type: web
     name: media-service
-    protocol: http2
-    healthCheckPath: ""
     plan: free
     env: node
+    healthCheckPath: ""
     buildCommand: npm install && npx nx build media-service
     startCommand: node dist/apps/media-service/main.js
     envVars:
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/MediaDB?sslmode=require&channel_binding=require"
+      - key: REDIS_URL
+        value: "rediss://default:gQAAAAAAAnvTAAIgcDFlMmI5MzIxY2YwZWU0NDBjYTY2N2M4ZjhhOTdkNTQyNw@tops-terrier-162771.upstash.io:6379"
       - key: YOUTUBE_CLIENT_ID
         sync: false
       - key: YOUTUBE_CLIENT_SECRET

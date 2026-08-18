@@ -1,37 +1,37 @@
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { MessagePattern } from '@nestjs/microservices';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @GrpcMethod('AuthService', 'Register')
+  @MessagePattern('')
   async register(data: any) {
     return this.appService.register(data);
   }
 
-  @GrpcMethod('AuthService', 'Login')
+  @MessagePattern('')
   async login(data: any) {
     return this.appService.login(data);
   }
 
-  @GrpcMethod('AuthService', 'RefreshToken')
+  @MessagePattern('')
   async refreshToken(data: { userId: string, refreshToken: string }) {
     return this.appService.refreshToken(data);
   }
 
-  @GrpcMethod('AuthService', 'ForgotPassword')
+  @MessagePattern('')
   async forgotPassword(data: any) {
     return this.appService.forgotPassword(data);
   }
 
-  @GrpcMethod('AuthService', 'VerifyOtp')
+  @MessagePattern('')
   async verifyOtp(data: any) {
     return this.appService.verifyOtp(data);
   }
 
-  @GrpcMethod('AuthService', 'ResetPassword')
+  @MessagePattern('')
   async resetPassword(data: any) {
     return this.appService.resetPassword(data);
   }

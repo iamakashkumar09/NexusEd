@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Inject, OnModuleInit, UseGuards, Get, Request, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
-import { ClientGrpc } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, Observable } from 'rxjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -22,19 +22,17 @@ interface AuthService {
 }
 
 @Controller('auth')
-export class AuthController implements OnModuleInit {
-  private authService: AuthService;
+export class AuthController {
+  
 
-  constructor(@Inject('AUTH_SERVICE') private readonly client: ClientGrpc) {}
+  constructor(@Inject('AUTH_SERVICE') private readonly client: ClientProxy) {}
 
-  onModuleInit() {
-    this.authService = this.client.getService<AuthService>('AuthService');
-  }
+  
 
   @Post('register')
   async register(@Body() body: RegisterDto) {
     try {
-      return await lastValueFrom(this.authService.Register(body));
+      return await lastValueFrom(this.client.send('Register', body));
     } catch (error) {
       throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -43,7 +41,7 @@ export class AuthController implements OnModuleInit {
   @Post('login')
   async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
     try {
-      const response = await lastValueFrom(this.authService.Login(body));
+      const response = await lastValueFrom(this.client.send('Login', body));
       if (response.success && response.token) {
         res.cookie('token', response.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
         res.cookie('refreshToken', response.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
@@ -58,7 +56,7 @@ export class AuthController implements OnModuleInit {
   @Post('refresh')
   async refresh(@Body() body: RefreshTokenDto, @Res({ passthrough: true }) res: Response) {
     try {
-      const response = await lastValueFrom(this.authService.RefreshToken(body));
+      const response = await lastValueFrom(this.client.send('RefreshToken', body));
       if (response.success && response.token) {
         res.cookie('token', response.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
         res.cookie('refreshToken', response.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
@@ -73,7 +71,7 @@ export class AuthController implements OnModuleInit {
   @Post('forgot-password')
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     try {
-      return await lastValueFrom(this.authService.ForgotPassword(body));
+      return await lastValueFrom(this.client.send('ForgotPassword', body));
     } catch (error) {
       throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -82,7 +80,7 @@ export class AuthController implements OnModuleInit {
   @Post('verify-otp')
   async verifyOtp(@Body() body: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
     try {
-      const response = await lastValueFrom(this.authService.VerifyOtp(body));
+      const response = await lastValueFrom(this.client.send('VerifyOtp', body));
       if (response.success && response.token) {
         res.cookie('token', response.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
         res.cookie('refreshToken', response.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
@@ -97,7 +95,7 @@ export class AuthController implements OnModuleInit {
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
     try {
-      return await lastValueFrom(this.authService.ResetPassword(body));
+      return await lastValueFrom(this.client.send('ResetPassword', body));
     } catch (error) {
       throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }

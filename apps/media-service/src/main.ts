@@ -1,26 +1,23 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
-
-// Load .env from source directory
 dotenv.config({ path: join(__dirname, '../../../apps/media-service/.env') });
 
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  const port = process.env.PORT || 5004;
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-    transport: Transport.GRPC,
-    options: {
-      package: 'media',
-      protoPath: join(__dirname, '../../../libs/shared/proto/media.proto'),
-      url: `0.0.0.0:${port}`,
-    },
+  const port = process.env.PORT || 5003;
+  const app = await NestFactory.create(AppModule);
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.REDIS,
+    options: { url: process.env.REDIS_URL || 'redis://localhost:6379' } as any,
   });
 
-  await app.listen();
-  console.log(`Media Microservice is listening on port ${port}`);
+  await app.startAllMicroservices();
+  await app.listen(port);
+  console.log(`Media Microservice is listening on port ${port} with Redis connected`);
 }
-
 bootstrap();

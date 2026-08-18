@@ -1,5 +1,5 @@
 import { Controller, Get, Put, Body, UseGuards, Request, Inject, OnModuleInit, HttpException, HttpStatus } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, Observable } from 'rxjs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -11,20 +11,18 @@ interface UserService {
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)
-export class UserController implements OnModuleInit {
-  private userService: UserService;
+export class UserController {
+  
 
-  constructor(@Inject('USER_SERVICE') private readonly client: ClientGrpc) {}
+  constructor(@Inject('USER_SERVICE') private readonly client: ClientProxy) {}
 
-  onModuleInit() {
-    this.userService = this.client.getService<UserService>('UserService');
-  }
+  
 
   @Get('profile')
   async getProfile(@Request() req: any) {
     try {
       const userId = req.user.userId;
-      return await lastValueFrom(this.userService.GetProfile({ userId }));
+      return await lastValueFrom(this.client.send('GetProfile', { userId }));
     } catch (error) {
       throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -38,7 +36,7 @@ export class UserController implements OnModuleInit {
         ...body,
         userId,
       };
-      return await lastValueFrom(this.userService.UpdateProfile(payload));
+      return await lastValueFrom(this.client.send('UpdateProfile', payload));
     } catch (error) {
       throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }

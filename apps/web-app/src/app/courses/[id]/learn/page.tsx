@@ -5,7 +5,7 @@ import { CoursePlayer } from './CoursePlayer';
 async function getCourse(id: string) {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/courses/${id}`, {
-      cache: `no-store',
+      cache: 'no-store',
     });
     if (!res.ok) return null;
     return await res.json();

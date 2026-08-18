@@ -22,7 +22,7 @@ import { MediaController } from './module/media/media.controller';
         options: {
           package: 'auth',
           protoPath: join(__dirname, '../../../libs/shared/proto/auth.proto'),
-          url: process.env.AUTH_SERVICE_URL || '0.0.0.0:5000',
+          url: process.env.AUTH_SERVICE_HOST ? `${process.env.AUTH_SERVICE_HOST}:5000` : '0.0.0.0:5000',
         },
       },
       {
@@ -31,7 +31,7 @@ import { MediaController } from './module/media/media.controller';
         options: {
           package: 'course',
           protoPath: join(__dirname, '../../../libs/shared/proto/course.proto'),
-          url: process.env.COURSE_SERVICE_URL || '0.0.0.0:5002',
+          url: process.env.COURSE_SERVICE_HOST ? `${process.env.COURSE_SERVICE_HOST}:5002` : '0.0.0.0:5002',
         },
       },
       {
@@ -40,7 +40,7 @@ import { MediaController } from './module/media/media.controller';
         options: {
           package: 'media',
           protoPath: join(__dirname, '../../../libs/shared/proto/media.proto'),
-          url: process.env.MEDIA_SERVICE_URL || '0.0.0.0:5004',
+          url: process.env.MEDIA_SERVICE_HOST ? `${process.env.MEDIA_SERVICE_HOST}:5004` : '0.0.0.0:5004',
         },
       },
     ]),

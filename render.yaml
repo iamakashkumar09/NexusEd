@@ -22,14 +22,26 @@ services:
     envVars:
       - key: JWT_SECRET
         value: "super-secret-local-jwt-key"
-      - key: AUTH_SERVICE_URL
-        value: auth-service:5000
-      - key: USER_SERVICE_URL
-        value: user-service:5001
-      - key: COURSE_SERVICE_URL
-        value: course-service:5002
-      - key: MEDIA_SERVICE_URL
-        value: media-service:5003
+      - key: AUTH_SERVICE_HOST
+        fromService:
+          type: web
+          name: auth-service
+          property: host
+      - key: USER_SERVICE_HOST
+        fromService:
+          type: web
+          name: user-service
+          property: host
+      - key: COURSE_SERVICE_HOST
+        fromService:
+          type: web
+          name: course-service
+          property: host
+      - key: MEDIA_SERVICE_HOST
+        fromService:
+          type: web
+          name: media-service
+          property: host
 
   # ─── Hybrid Web Services (gRPC + HTTP) ─────────────────────────────────
   - type: web
@@ -51,8 +63,11 @@ services:
         value: "iamakashkumar2007@gmail.com"
       - key: SMTP_PASS
         value: "trgzecgkbbeobfgk"
-      - key: USER_SERVICE_URL
-        value: user-service:5001
+      - key: USER_SERVICE_HOST
+        fromService:
+          type: web
+          name: user-service
+          property: host
 
   - type: web
     name: user-service

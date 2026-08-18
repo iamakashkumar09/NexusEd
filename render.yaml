@@ -2,6 +2,7 @@ services:
   # ─── Public Web Services ──────────────────────────────────────────
   - type: web
     name: web-app
+    plan: free
     env: node
     buildCommand: npm install && npx nx build web-app
     startCommand: npx nx start web-app
@@ -14,6 +15,7 @@ services:
 
   - type: web
     name: api-gateway
+    plan: free
     env: node
     buildCommand: npm install && npx nx build api-gateway
     startCommand: node dist/apps/api-gateway/main.js
@@ -29,9 +31,10 @@ services:
       - key: MEDIA_SERVICE_URL
         value: media-service:5003
 
-  # ─── Private Microservices (gRPC) ─────────────────────────────────
-  - type: pserv
+  # ─── Hybrid Web Services (gRPC + HTTP) ─────────────────────────────────
+  - type: web
     name: auth-service
+    plan: free
     env: node
     buildCommand: npm install && npx nx build auth-service
     startCommand: node dist/apps/auth-service/main.js
@@ -51,8 +54,9 @@ services:
       - key: USER_SERVICE_URL
         value: user-service:5001
 
-  - type: pserv
+  - type: web
     name: user-service
+    plan: free
     env: node
     buildCommand: npm install && npx nx build user-service
     startCommand: node dist/apps/user-service/main.js
@@ -60,8 +64,9 @@ services:
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/Userdb?sslmode=require&uselibpqcompat=true&channel_binding=require"
 
-  - type: pserv
+  - type: web
     name: course-service
+    plan: free
     env: node
     buildCommand: npm install && npx nx build course-service
     startCommand: node dist/apps/course-service/main.js
@@ -69,8 +74,9 @@ services:
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/CourseDB?sslmode=require&channel_binding=require"
 
-  - type: pserv
+  - type: web
     name: media-service
+    plan: free
     env: node
     buildCommand: npm install && npx nx build media-service
     startCommand: node dist/apps/media-service/main.js

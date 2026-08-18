@@ -24,9 +24,15 @@ async function bootstrap() {
   });
 
   await app.startAllMicroservices();
-  await app.listen(5003); // media-service HTTP runs on 5003
   
-  console.log('Media microservice HTTP is listening on port 5003');
+  // Dummy HTTP health check for Render Web Services
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/', (req, res) => res.send('OK'));
+
+  const port = process.env.PORT || 5003;
+  await app.listen(port); // media-service HTTP runs on PORT or 5003
+  
+  console.log(`Media microservice HTTP is listening on port ${port}`);
   console.log('Media microservice gRPC is listening on port 5004');
 }
 

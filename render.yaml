@@ -18,10 +18,8 @@ services:
     buildCommand: npm install && npx nx build api-gateway
     startCommand: node dist/apps/api-gateway/main.js
     envVars:
-      - key: DATABASE_URL
-        sync: false
       - key: JWT_SECRET
-        sync: false
+        value: "super-secret-local-jwt-key"
       - key: AUTH_SERVICE_URL
         value: auth-service:5000
       - key: USER_SERVICE_URL
@@ -39,9 +37,17 @@ services:
     startCommand: node dist/apps/auth-service/main.js
     envVars:
       - key: DATABASE_URL
-        sync: false
+        value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/AuthDB?sslmode=require&uselibpqcompat=true&channel_binding=require"
       - key: JWT_SECRET
-        sync: false
+        value: "super-secret-local-jwt-key"
+      - key: SMTP_HOST
+        value: "smtp.gmail.com"
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        value: "iamakashkumar2007@gmail.com"
+      - key: SMTP_PASS
+        value: "trgzecgkbbeobfgk"
       - key: USER_SERVICE_URL
         value: user-service:5001
 
@@ -52,7 +58,7 @@ services:
     startCommand: node dist/apps/user-service/main.js
     envVars:
       - key: DATABASE_URL
-        sync: false
+        value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/Userdb?sslmode=require&uselibpqcompat=true&channel_binding=require"
 
   - type: pserv
     name: course-service
@@ -61,7 +67,7 @@ services:
     startCommand: node dist/apps/course-service/main.js
     envVars:
       - key: DATABASE_URL
-        sync: false
+        value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/CourseDB?sslmode=require&channel_binding=require"
 
   - type: pserv
     name: media-service
@@ -70,4 +76,10 @@ services:
     startCommand: node dist/apps/media-service/main.js
     envVars:
       - key: DATABASE_URL
+        value: "postgresql://neondb_owner:npg_n9Db2XMrocVZ@ep-crimson-river-axxww90y-pooler.c-4.us-east-2.aws.neon.tech/MediaDB?sslmode=require&channel_binding=require"
+      - key: YOUTUBE_CLIENT_ID
+        sync: false
+      - key: YOUTUBE_CLIENT_SECRET
+        sync: false
+      - key: YOUTUBE_REFRESH_TOKEN
         sync: false

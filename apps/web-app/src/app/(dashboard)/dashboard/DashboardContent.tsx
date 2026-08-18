@@ -15,84 +15,52 @@ interface Profile {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon, sub, color }: { label: string; value: string; icon: string; sub?: string; color?: string }) {
+function StatCard({ label, value, icon, sub, colorClass = "text-ink" }: { label: string; value: string; icon: string; sub?: string; colorClass?: string }) {
   return (
-    <div
-      style={{
-        background: 'var(--surface-1)',
-        border: '1px solid var(--hairline)',
-        borderRadius: 14,
-        padding: '20px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-      }}
-    >
-      <div style={{ fontSize: 36 }}>{icon}</div>
+    <div className="bg-surface-1 border border-hairline rounded-[14px] p-5 flex items-center gap-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-hairline-strong hover:bg-surface-2 group">
+      <div className="text-4xl transform transition-transform group-hover:scale-110 group-hover:-rotate-3">{icon}</div>
       <div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: color || 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1 }}>{value}</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-subtle)', fontWeight: 500, marginTop: 4 }}>{label}</div>
-        {sub && <div style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600, marginTop: 2 }}>{sub}</div>}
+        <div className={`text-[26px] font-bold tracking-tight leading-none ${colorClass}`}>{value}</div>
+        <div className="text-xs text-ink-subtle font-medium mt-1">{label}</div>
+        {sub && <div className="text-[11px] text-success font-semibold mt-0.5">{sub}</div>}
       </div>
     </div>
   );
 }
 
 function ProgressBar({ value }: { value: number }) {
-  const color = value >= 80 ? '#27a644' : value >= 50 ? '#5e6ad2' : '#d0a020';
+  const color = value >= 80 ? 'bg-success' : value >= 50 ? 'bg-primary' : 'bg-warning';
   return (
-    <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden' }}>
-      <div style={{ height: '100%', width: `${value}%`, background: color, borderRadius: 999 }} />
+    <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden">
+      <div className={`h-full ${color} rounded-full transition-all duration-500 ease-out`} style={{ width: `${value}%` }} />
     </div>
   );
 }
 
 function Stars({ rating }: { rating: number }) {
   return (
-    <span style={{ display: 'inline-flex', gap: 1, alignItems: 'center' }}>
+    <span className="inline-flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(rating) ? '#f59e0b' : 'none'} stroke="#f59e0b" strokeWidth="2">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
       ))}
-      <span style={{ color: '#f59e0b', fontSize: 11, fontWeight: 600, marginLeft: 3 }}>{rating}</span>
+      <span className="text-warning text-[11px] font-semibold ml-1">{rating}</span>
     </span>
   );
 }
 
-function HoverCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  const [hovered, setHovered] = useState(false);
+function HoverCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      style={{
-        ...style,
-        transform: hovered ? 'translateY(-2px)' : 'none',
-        borderColor: hovered ? 'var(--hairline-strong)' : 'var(--hairline)',
-        boxShadow: hovered ? '0 12px 32px rgba(0,0,0,0.4)' : 'inset 0 1px 0 rgba(255,255,255,0.04)',
-        transition: 'transform 0.15s, border-color 0.15s, box-shadow 0.15s',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className={`transition-all duration-200 hover:-translate-y-0.5 hover:border-hairline-strong hover:shadow-lg hover:shadow-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${className}`}>
       {children}
     </div>
   );
 }
 
-function ScaleCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  const [hovered, setHovered] = useState(false);
+function ScaleCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      style={{
-        ...style,
-        transform: hovered ? 'scale(1.02)' : 'scale(1)',
-        borderColor: hovered ? 'var(--hairline-strong)' : 'var(--hairline)',
-        transition: 'transform 0.2s, border-color 0.15s',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className={`transition-all duration-200 hover:scale-[1.02] hover:border-hairline-strong ${className}`}>
       {children}
     </div>
   );
@@ -155,7 +123,6 @@ export function DashboardContent({ profile }: { profile: Profile | null }) {
         .catch(console.error)
         .finally(() => setLoading(false));
 
-      // Fetch recommended / catalog picks
       fetch('/api/courses/catalog')
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
@@ -192,227 +159,139 @@ export function DashboardContent({ profile }: { profile: Profile | null }) {
   }, [isInstructor]);
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div className="max-w-[1200px] mx-auto w-full">
       {/* ─── Welcome Banner ─── */}
-      <div
-        style={{
-          borderRadius: 16,
-          background: 'linear-gradient(135deg, #0d0e1a 0%, #1a1040 50%, #0d1a2a 100%)',
-          border: '1px solid var(--hairline)',
-          padding: '32px 36px',
-          marginBottom: 28,
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
-        }}
-      >
-        <div style={{ position: 'absolute', top: -40, right: 80, width: 220, height: 220, borderRadius: '50%', background: 'rgba(94,106,210,0.18)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -40, right: 200, width: 160, height: 160, borderRadius: '50%', background: 'rgba(166,130,255,0.12)', filter: 'blur(50px)', pointerEvents: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+      <div className="rounded-2xl bg-gradient-to-br from-[#0d0e1a] via-[#1a1040] to-[#0d1a2a] border border-hairline p-6 md:p-8 mb-8 relative overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+        {/* Ambient glows */}
+        <div className="absolute -top-10 -right-20 w-[220px] h-[220px] rounded-full bg-[rgba(94,106,210,0.18)] blur-[60px] pointer-events-none" />
+        <div className="absolute -bottom-10 right-20 w-[160px] h-[160px] rounded-full bg-[rgba(166,130,255,0.12)] blur-[50px] pointer-events-none" />
+        
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+            <div className="text-xs font-semibold text-primary tracking-widest uppercase mb-2">
               {greeting} ✦
             </div>
-            <h1 style={{ fontSize: 30, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.04em', marginBottom: 8 }}>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
               Welcome back, {firstName}!
             </h1>
-            <p style={{ fontSize: 14, color: 'var(--ink-muted)', maxWidth: 460 }}>
+            <p className="text-sm text-ink-muted max-w-[460px] leading-relaxed">
               {isInstructor
                 ? "Your courses are ready. Here's a snapshot of your teaching platform."
                 : "You're on a learning streak! Pick up where you left off or explore new courses. 🔥"}
             </p>
           </div>
-          {isInstructor ? (
-            <Link
-              href="/courses/create"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '11px 22px',
-                borderRadius: 10,
-                background: 'var(--primary)',
-                color: '#fff',
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: 'none',
-                boxShadow: '0 4px 16px rgba(94,106,210,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Create Course
-            </Link>
-          ) : (
-            <Link
-              href="/catalog"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '11px 22px',
-                borderRadius: 10,
-                background: 'var(--surface-2)',
-                border: '1px solid var(--hairline)',
-                color: 'var(--ink)',
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              🧭 Browse Catalog
-            </Link>
-          )}
+          <div className="shrink-0">
+            {isInstructor ? (
+              <Link
+                href="/courses/create"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold shadow-[0_4px_16px_rgba(94,106,210,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-primary-light hover:-translate-y-[1px] transition-all"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Create Course
+              </Link>
+            ) : (
+              <Link
+                href="/catalog"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-surface-2 border border-hairline text-white text-sm font-semibold hover:bg-surface-3 transition-colors"
+              >
+                🧭 Browse Catalog
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
       {/* ─── Stats Row ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 32 }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-8">
         {isInstructor ? (
           <>
             <StatCard icon="👨‍🎓" label="Total Students" value="0" sub="All time" />
             <StatCard icon="📚" label="Active Courses" value={myCourses.length.toString()} />
-            <StatCard icon="💰" label="Total Revenue" value="$0" color="#27a644" />
-            <StatCard icon="⭐" label="Avg. Rating" value="4.8" sub="Across all courses" color="#f59e0b" />
+            <StatCard icon="💰" label="Total Revenue" value="$0" colorClass="text-success" />
+            <StatCard icon="⭐" label="Avg. Rating" value="4.8" sub="Across all courses" colorClass="text-warning" />
           </>
         ) : (
           <>
             <StatCard icon="📖" label="Courses Enrolled" value={stats ? stats.coursesEnrolled?.toString() : myCourses.length.toString()} />
             <StatCard icon="⏱️" label="Hours Learned" value={stats ? `${stats.hoursLearned || 0}h` : '0h'} sub="This month" />
-            <StatCard icon="🔥" label="Day Streak" value={stats ? stats.dayStreak?.toString() : '1'} sub="Keep it up!" color="#f59e0b" />
+            <StatCard icon="🔥" label="Day Streak" value={stats ? stats.dayStreak?.toString() : '1'} sub="Keep it up!" colorClass="text-warning" />
             <StatCard icon="🏆" label="Certificates" value={stats ? stats.certificates?.toString() : '0'} />
           </>
         )}
       </div>
 
       {/* ─── Main Content Grid ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24 }}>
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-6">
         {/* Left column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        <div className="flex flex-col gap-8 min-w-0">
           {/* Continue Learning / Your Courses */}
           <section>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[17px] font-bold text-ink tracking-tight">
                 {isInstructor ? 'Your Courses' : 'Continue Learning'}
               </h2>
-              <Link href="/courses" style={{ fontSize: 13, color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>
+              <Link href="/courses" className="text-[13px] text-primary font-medium hover:underline">
                 View all →
               </Link>
             </div>
 
             {myCourses.length === 0 ? (
-              <div
-                style={{
-                  padding: '36px 24px',
-                  background: 'var(--surface-1)',
-                  border: '1px dashed var(--hairline-strong)',
-                  borderRadius: 14,
-                  textAlign: 'center',
-                  color: 'var(--ink-subtle)',
-                }}
-              >
-                <div style={{ fontSize: 32, marginBottom: 8 }}>{isInstructor ? '📚' : '🎓'}</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', marginBottom: 6 }}>
+              <div className="p-9 bg-surface-1 border border-dashed border-hairline-strong rounded-xl text-center text-ink-subtle">
+                <div className="text-4xl mb-3">{isInstructor ? '📚' : '🎓'}</div>
+                <div className="text-[15px] font-bold text-ink mb-1.5">
                   {isInstructor ? 'No courses created yet' : 'No courses in progress'}
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--ink-muted)', marginBottom: 16 }}>
+                <p className="text-[13px] text-ink-muted mb-5 max-w-[300px] mx-auto">
                   {isInstructor
                     ? 'Start teaching today by creating your first course curriculum.'
                     : 'Explore our catalog and enroll in courses to start learning.'}
                 </p>
                 <Link
                   href={isInstructor ? '/courses/create' : '/catalog'}
-                  style={{
-                    display: 'inline-block',
-                    padding: '8px 18px',
-                    borderRadius: 8,
-                    background: 'var(--primary)',
-                    color: '#fff',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                  }}
+                  className="inline-block px-5 py-2.5 rounded-lg bg-primary text-white text-[13px] font-bold hover:bg-primary-light transition-colors shadow-glow"
                 >
                   {isInstructor ? 'Create Course' : 'Browse Catalog'}
                 </Link>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="flex flex-col gap-3">
                 {myCourses.map((course: any) => (
                   <HoverCard
                     key={course.id}
-                    style={{
-                      display: 'flex',
-                      gap: 16,
-                      alignItems: 'center',
-                      background: 'var(--surface-1)',
-                      border: '1px solid var(--hairline)',
-                      borderRadius: 12,
-                      padding: 14,
-                      cursor: 'pointer',
-                    }}
+                    className="flex flex-col sm:flex-row gap-4 items-center bg-surface-1 border border-hairline rounded-xl p-3.5 cursor-pointer"
                   >
-                    <Link href={`/courses/${course.id}/learn`} style={{ display: 'flex', gap: 16, alignItems: 'center', flex: 1, textDecoration: 'none', minWidth: 0 }}>
-                      <div style={{ width: 100, height: 58, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#111', position: 'relative' }}>
-                        <Image src={course.thumbnail} alt={course.title} fill style={{ objectFit: 'cover' }} sizes="100px" />
+                    <Link href={`/courses/${course.id}${!isInstructor ? '/learn' : ''}`} className="flex flex-col sm:flex-row gap-4 items-center flex-1 min-w-0 w-full">
+                      <div className="w-full sm:w-[120px] aspect-video sm:h-[68px] rounded-lg overflow-hidden shrink-0 bg-[#111] relative">
+                        <Image src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 120px" />
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: 'var(--ink)',
-                            marginBottom: 4,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                      <div className="flex-1 min-w-0 w-full text-center sm:text-left">
+                        <div className="text-sm font-bold text-ink mb-1 truncate">
                           {course.title}
                         </div>
                         {isInstructor ? (
-                          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                            <span style={{ fontSize: 12, color: 'var(--ink-subtle)' }}>📚 {course.totalLectures} lectures</span>
-                            <span
-                              style={{
-                                fontSize: 11,
-                                fontWeight: 600,
-                                padding: '2px 8px',
-                                borderRadius: 999,
-                                background: course.status === 'Published' ? 'rgba(39,166,68,0.15)' : 'rgba(208,160,32,0.15)',
-                                color: course.status === 'Published' ? 'var(--success)' : '#d0a020',
-                              }}
-                            >
+                          <div className="flex items-center justify-center sm:justify-start gap-4">
+                            <span className="text-xs text-ink-subtle">📚 {course.totalLectures} lectures</span>
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${course.status === 'Published' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'}`}>
                               {course.status}
                             </span>
                           </div>
                         ) : (
                           <>
-                            <div style={{ fontSize: 12, color: 'var(--ink-subtle)', marginBottom: 8 }}>
+                            <div className="text-[11px] text-ink-subtle mb-2">
                               {course.completedLectures}/{course.totalLectures} lectures completed
                             </div>
                             <ProgressBar value={course.progress} />
-                            <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 4 }}>{course.progress}% complete</div>
+                            <div className="text-[11px] text-ink-subtle mt-1.5 font-medium">{course.progress}% complete</div>
                           </>
                         )}
                       </div>
                     </Link>
                     <Link
                       href={isInstructor ? `/courses/${course.id}` : `/courses/${course.id}/learn`}
-                      style={{
-                        flexShrink: 0,
-                        padding: '8px 16px',
-                        borderRadius: 8,
-                        background: isInstructor ? 'var(--surface-2)' : 'var(--primary)',
-                        border: isInstructor ? '1px solid var(--hairline)' : 'none',
-                        color: isInstructor ? 'var(--ink)' : '#fff',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                      }}
+                      className={`shrink-0 w-full sm:w-auto text-center px-4 py-2.5 rounded-lg text-xs font-bold transition-all ${isInstructor ? 'bg-surface-2 border border-hairline text-ink hover:bg-surface-3' : 'bg-primary text-white hover:bg-primary-light shadow-glow hover:shadow-[0_0_0_4px_var(--primary-glow)]'}`}
                     >
                       {isInstructor ? 'Manage' : '▶ Resume'}
                     </Link>
@@ -425,46 +304,23 @@ export function DashboardContent({ profile }: { profile: Profile | null }) {
           {/* Recommended Courses (students only) */}
           {!isInstructor && catalogPicks.length > 0 && (
             <section>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>Recommended For You</h2>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '3px 8px',
-                      borderRadius: 999,
-                      background: 'rgba(94,106,210,0.15)',
-                      color: 'var(--primary)',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                    }}
-                  >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-[17px] font-bold text-ink tracking-tight">Recommended For You</h2>
+                  <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-primary/15 text-primary tracking-wider uppercase">
                     Curated Picks
                   </span>
                 </div>
-                <Link href="/catalog" style={{ fontSize: 13, color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>
+                <Link href="/catalog" className="text-[13px] text-primary font-medium hover:underline">
                   Browse all →
                 </Link>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
                 {catalogPicks.map((course) => (
-                  <Link key={course.id} href={`/courses/${course.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <ScaleCard
-                      style={{
-                        background: 'var(--surface-1)',
-                        border: '1px solid var(--hairline)',
-                        borderRadius: 12,
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                      }}
-                    >
-                      <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative', background: '#111' }}>
+                  <Link key={course.id} href={`/courses/${course.id}`} className="block h-full group">
+                    <ScaleCard className="bg-surface-1 border border-hairline rounded-xl overflow-hidden cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] h-full flex flex-col bg-surface-1/50 backdrop-blur-sm group-hover:bg-surface-2 transition-colors">
+                      <div className="w-full aspect-video relative bg-[#111]">
                         <Image
                           src={
                             course.thumbnailUrl && typeof course.thumbnailUrl === 'string' && !course.thumbnailUrl.startsWith('[object')
@@ -473,36 +329,21 @@ export function DashboardContent({ profile }: { profile: Profile | null }) {
                           }
                           alt={course.title}
                           fill
-                          style={{ objectFit: 'cover' }}
-                          sizes="200px"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                         />
                         {course.category && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: 8,
-                              left: 8,
-                              fontSize: 10,
-                              fontWeight: 700,
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              background: 'rgba(0,0,0,0.7)',
-                              color: 'var(--ink-muted)',
-                              backdropFilter: 'blur(4px)',
-                              letterSpacing: '0.06em',
-                              textTransform: 'uppercase',
-                            }}
-                          >
+                          <div className="absolute top-2 left-2 text-[10px] font-bold px-2 py-1 rounded-full bg-black/70 text-ink-muted backdrop-blur-md tracking-wider uppercase border border-white/10 shadow-lg">
                             {course.category}
                           </div>
                         )}
                       </div>
-                      <div style={{ padding: 12, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 4, lineHeight: 1.3 }}>{course.title}</div>
-                        <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginBottom: 6 }}>NexusEd Instructor</div>
-                        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div className="p-3.5 flex flex-col flex-1">
+                        <div className="text-[13px] font-bold text-ink mb-1 leading-snug line-clamp-2">{course.title}</div>
+                        <div className="text-[11px] text-ink-subtle mb-2">NexusEd Instructor</div>
+                        <div className="mt-auto flex items-center justify-between pt-2">
                           <Stars rating={4.8} />
-                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>
+                          <span className="text-[13px] font-extrabold text-primary">
                             {course.price === 0 || !course.price ? 'Free' : `₹${course.price}`}
                           </span>
                         </div>
@@ -516,34 +357,37 @@ export function DashboardContent({ profile }: { profile: Profile | null }) {
         </div>
 
         {/* Right: Activity Feed */}
-        <aside>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', marginBottom: 14 }}>Recent Activity</h2>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 12, overflow: 'hidden', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+        <aside className="shrink-0 w-full lg:w-[300px]">
+          <h2 className="text-[15px] font-bold text-ink tracking-tight mb-3.5">Recent Activity</h2>
+          <div className="bg-surface-1 border border-hairline rounded-xl overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             {ACTIVITY.map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 16px', borderBottom: i < ACTIVITY.length - 1 ? '1px solid var(--hairline)' : 'none', alignItems: 'flex-start' }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>
+              <div key={i} className={`flex gap-3 p-3.5 items-start transition-colors hover:bg-surface-2 ${i < ACTIVITY.length - 1 ? 'border-b border-hairline' : ''}`}>
+                <div className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center text-base shrink-0 shadow-sm">
                   {item.icon}
                 </div>
                 <div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{item.text}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-subtle)', marginTop: 3 }}>{item.time}</div>
+                  <div className="text-xs text-ink-muted leading-relaxed font-medium">{item.text}</div>
+                  <div className="text-[11px] text-ink-subtle mt-1 font-medium">{item.time}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ marginTop: 16, background: 'var(--surface-1)', border: '1px solid var(--hairline)', borderRadius: 12, padding: 16, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' }}>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 12 }}>This Week</h3>
-            {[
-              { label: 'Study time', value: '4h 20m' },
-              { label: 'Lectures watched', value: '12' },
-              { label: 'Notes taken', value: '8' },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 2 ? '1px solid var(--hairline)' : 'none' }}>
-                <span style={{ fontSize: 12, color: 'var(--ink-subtle)' }}>{item.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{item.value}</span>
-              </div>
-            ))}
+          <div className="mt-4 bg-surface-1 border border-hairline rounded-xl p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-16 h-16 bg-primary-bg rounded-full blur-2xl pointer-events-none" />
+            <h3 className="text-[13px] font-bold text-ink mb-3 relative z-10">This Week</h3>
+            <div className="flex flex-col gap-0 relative z-10">
+              {[
+                { label: 'Study time', value: '4h 20m' },
+                { label: 'Lectures watched', value: '12' },
+                { label: 'Notes taken', value: '8' },
+              ].map((item, i) => (
+                <div key={i} className={`flex justify-between items-center py-2 ${i < 2 ? 'border-b border-hairline' : ''}`}>
+                  <span className="text-xs text-ink-subtle font-medium">{item.label}</span>
+                  <span className="text-[13px] font-bold text-ink">{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </aside>
       </div>

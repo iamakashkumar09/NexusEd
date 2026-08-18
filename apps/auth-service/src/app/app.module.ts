@@ -7,6 +7,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 
+import { EmailService } from './email.service';
+
 @Module({
   imports: [
     JwtModule.register({
@@ -26,6 +28,6 @@ import { PrismaService } from './prisma.service';
     ]),
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, EmailService],
 })
 export class AppModule {}

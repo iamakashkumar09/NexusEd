@@ -5,6 +5,9 @@ import { lastValueFrom, Observable } from 'rxjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 import { AuthResponse } from '@nexus-ed/shared-types';
@@ -13,6 +16,9 @@ interface AuthService {
   Register(data: any): Observable<AuthResponse>;
   Login(data: any): Observable<AuthResponse>;
   RefreshToken(data: any): Observable<AuthResponse>;
+  ForgotPassword(data: any): Observable<AuthResponse>;
+  VerifyOtp(data: any): Observable<AuthResponse>;
+  ResetPassword(data: any): Observable<AuthResponse>;
 }
 
 @Controller('auth')
@@ -59,6 +65,39 @@ export class AuthController implements OnModuleInit {
       }
       const { token, refreshToken, ...responseData } = response;
       return responseData;
+    } catch (error) {
+      throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    try {
+      return await lastValueFrom(this.authService.ForgotPassword(body));
+    } catch (error) {
+      throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('verify-otp')
+  async verifyOtp(@Body() body: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
+    try {
+      const response = await lastValueFrom(this.authService.VerifyOtp(body));
+      if (response.success && response.token) {
+        res.cookie('token', response.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+        res.cookie('refreshToken', response.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+      }
+      const { token, refreshToken, ...responseData } = response;
+      return responseData;
+    } catch (error) {
+      throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    try {
+      return await lastValueFrom(this.authService.ResetPassword(body));
     } catch (error) {
       throw new HttpException(error.details || error.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }

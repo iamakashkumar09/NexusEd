@@ -59,7 +59,8 @@ export class AppService {
     socialLinks?: string;
   }) {
     try {
-      const userRole = (data.role || 'STUDENT').toString().toUpperCase();
+      const existing = await this.prisma.userProfile.findUnique({ where: { userId: data.userId } });
+      const userRole = (data.role || existing?.role || 'STUDENT').toString().toUpperCase();
 
       await this.prisma.userProfile.upsert({
         where: { userId: data.userId },

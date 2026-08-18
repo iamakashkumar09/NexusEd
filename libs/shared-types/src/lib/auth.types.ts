@@ -22,3 +22,19 @@ export interface AuthResponse {
     role: string;
   };
 }
+
+export interface VerifyOtpRequest {
+  email: string;
+  code: string;
+  type: 'REGISTER' | 'RESET_PASSWORD';
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}

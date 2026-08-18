@@ -2,7 +2,9 @@
   "name": "@nexus-ed/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "postinstall": "npx prisma generate --schema=apps/auth-service/prisma/schema.prisma && npx prisma generate --schema=apps/user-service/prisma/schema.prisma && npx prisma generate --schema=apps/course-service/prisma/schema.prisma && npx prisma generate --schema=apps/media-service/prisma/schema.prisma"
+  },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",

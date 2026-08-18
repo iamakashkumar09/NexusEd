@@ -13,7 +13,7 @@ model UserProfile {
   firstName String
   lastName  String
   email     String?
-  role      String? @default("student")
+  role      String? @default("STUDENT")
 
   studentProfile    StudentProfile?
   instructorProfile InstructorProfile?

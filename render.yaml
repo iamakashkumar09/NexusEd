@@ -10,7 +10,7 @@ services:
         fromService:
           type: web
           name: api-gateway
-          envVar: RENDER_EXTERNAL_URL
+          envVarKey: RENDER_EXTERNAL_URL
 
   - type: web
     name: api-gateway

@@ -6,32 +6,32 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @MessagePattern('')
+  @MessagePattern('Register')
   async register(data: any) {
     return this.appService.register(data);
   }
 
-  @MessagePattern('')
+  @MessagePattern('Login')
   async login(data: any) {
     return this.appService.login(data);
   }
 
-  @MessagePattern('')
+  @MessagePattern('RefreshToken')
   async refreshToken(data: { userId: string, refreshToken: string }) {
     return this.appService.refreshToken(data);
   }
 
-  @MessagePattern('')
+  @MessagePattern('ForgotPassword')
   async forgotPassword(data: any) {
     return this.appService.forgotPassword(data);
   }
 
-  @MessagePattern('')
+  @MessagePattern('VerifyOtp')
   async verifyOtp(data: any) {
     return this.appService.verifyOtp(data);
   }
 
-  @MessagePattern('')
+  @MessagePattern('ResetPassword')
   async resetPassword(data: any) {
     return this.appService.resetPassword(data);
   }

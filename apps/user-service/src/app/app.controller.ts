@@ -6,12 +6,12 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @MessagePattern('')
+  @MessagePattern('GetProfile')
   async getProfile(data: { userId: string }) {
     return this.appService.getProfile(data);
   }
 
-  @MessagePattern('')
+  @MessagePattern('UpdateProfile')
   async updateProfile(data: any) {
     return this.appService.updateProfile(data);
   }

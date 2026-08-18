@@ -25,7 +25,7 @@ export class AppController {
   }
 
   // =================== gRPC Routes ===================
-  @MessagePattern('')
+  @MessagePattern('GetUploadUrl')
   async getUploadUrl(data: { filename: string; contentType: string; fileSize: number }) {
     try {
       const result = await this.appService.getUploadUrl(data);

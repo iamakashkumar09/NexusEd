@@ -1,17 +1,5 @@
 services:
   # ─── Public Web Services ──────────────────────────────────────────
-  - type: web
-    name: web-app
-    plan: free
-    env: node
-    buildCommand: npm install && npx nx build web-app
-    startCommand: npx nx start web-app
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: api-gateway
-          envVarKey: RENDER_EXTERNAL_URL
 
   - type: web
     name: api-gateway

@@ -16,11 +16,11 @@ The platform combines traditional e-learning capabilities such as users, courses
 - **RabbitMQ/Kafka** for asynchronous event-driven communication
 - **PostgreSQL** for relational business data, including the Course Service
 - **YouTube** for video/media storage and playback
-- **GenAI service** built with Python and FastAPI
-- **LangChain-based RAG pipeline**
-- **SentenceTransformers** for text embeddings
-- **ChromaDB** for vector storage and semantic retrieval
-- **Ollama / Llama / Qwen** for local LLM inference
+- **GenAI service** built with Python, FastAPI, and gRPC
+- **LangChain-based RAG pipeline** with course-level authorization filtering
+- **SentenceTransformers / Hugging Face** for dense vector embeddings
+- **Qdrant Cloud** for vector storage, similarity search, and payload filtering
+- **Groq Cloud / Gemini / OpenAI / Ollama** for ultra-fast LLM inference and Whisper fallback
 - Shared contracts, protobuf definitions, authentication utilities, and events
 
 ---
@@ -38,28 +38,28 @@ The platform combines traditional e-learning capabilities such as users, courses
                                       ▼
                          ┌─────────────────────────┐
                          │      API Gateway        │
-                         │         NestJS           │
+                         │         NestJS          │
                          └────────────┬────────────┘
                                       │
                               gRPC / Protobuf
                                       │
-             ┌────────────────────────┼────────────────────────┐
-             │                        │                        │
-             ▼                        ▼                        ▼
-    ┌────────────────┐      ┌────────────────┐      ┌────────────────┐
-    │ User Service   │      │ Course Service │      │Payment Service │
-    │    NestJS      │      │    NestJS      │      │    NestJS      │
-    │   gRPC Server  │      │   gRPC Server  │      │   gRPC Server  │
-    └───────┬────────┘      └───────┬────────┘      └───────┬────────┘
-            │                       │                       │
-            ▼                       ▼                       ▼
-       PostgreSQL             PostgreSQL              PostgreSQL
-
+             ┌────────────────────────┼────────────────────────┬────────────────────────┐
+             │                        │                        │                        │
+             ▼                        ▼                        ▼                        ▼
+    ┌────────────────┐      ┌────────────────┐      ┌────────────────┐      ┌────────────────┐
+    │ User Service   │      │ Course Service │      │Payment Service │      │ GenAI Service  │
+    │    NestJS      │      │    NestJS      │      │    NestJS      │      │ Python/FastAPI │
+    │   gRPC Server  │      │   gRPC Server  │      │   gRPC Server  │      │  gRPC Server   │
+    └───────┬────────┘      └───────┬────────┘      └───────┬────────┘      └───────┬────────┘
+            │                       │                       │                       │
+            ▼                       ▼                       ▼                       ▼
+       PostgreSQL              PostgreSQL              PostgreSQL             Qdrant Cloud
+                                                                             (Vector DB)
 
                          ┌─────────────────────────┐
                          │      Media Service      │
-                         │         NestJS           │
-                         │       gRPC Server        │
+                         │         NestJS          │
+                         │       gRPC Server       │
                          └────────────┬────────────┘
                                       │
                            Video / Media Upload (or Link)
@@ -67,17 +67,17 @@ The platform combines traditional e-learning capabilities such as users, courses
                                       ▼
                                   YouTube
                                       │
-                                      │ VideoUploaded
+                                      │ VideoUploaded (Event)
                                       ▼
                          ┌─────────────────────────┐
-                         │    RabbitMQ / Kafka     │
+                         │   RabbitMQ / CloudAMQP  │
                          │      Message Broker     │
                          └────────────┬────────────┘
                                       │
                                       ▼
                          ┌─────────────────────────┐
                          │      GenAI Service      │
-                         │      Python / FastAPI   │
+                         │   Async Event Worker    │
                          └────────────┬────────────┘
                                       │
                            ┌──────────┴──────────┐
@@ -86,21 +86,18 @@ The platform combines traditional e-learning capabilities such as users, courses
                     Ingestion Pipeline      Query Pipeline
                            │                     │
                            ▼                     ▼
-                    Transcription          LangChain
+                    YouTube Captions /       LangChain
+                    Groq Whisper Fallback    Retriever
                            │                     │
                            ▼                     ▼
-                       Chunking             Retriever
-                           │                     │
-                           ▼                     ▼
-                 SentenceTransformers       ChromaDB
-                           │                     │
-                           ▼                     ▼
-                       ChromaDB                 LLM
-                                                 │
-                                                 ▼
-                                         Ollama / Llama / Qwen
-
-
+                     Text Chunking          Qdrant Search
+                           │                (Course Filter)
+                           ▼                     │
+                  Hugging Face MiniLM            ▼
+                       Embeddings            Groq Cloud
+                           │                (Qwen/LLaMA/
+                           ▼                  Gemini)
+                      Qdrant Cloud
 ```
 
 ---

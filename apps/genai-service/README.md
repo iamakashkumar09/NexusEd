@@ -1,294 +1,390 @@
 # 🧠 NexusEd — GenAI Service
 
-> **Python + FastAPI** microservice providing RAG-based course Q&A and video transcript ingestion.
-
-cd apps\genai-service
-
-# Activate your virtual environment (assuming you created it as '.venv')
-.\.venv\Scripts\Activate.ps1
-
-# Start the GenAI Service (FastAPI + gRPC + RabbitMQ consumers)
-python main.py
-
+> **Python + FastAPI + gRPC + LangChain** microservice powering RAG-grounded course Q&A, automated lecture transcript ingestion, and semantic search.
 
 ---
 
-## 📁 File Structure
+## 🏗️ Architecture Overview
+
+The **NexusEd GenAI Service** acts as the intelligent cognitive layer for the NexusEd platform. It operates synchronously via **gRPC/REST** for real-time student queries and asynchronously via **RabbitMQ** for event-driven lecture transcript ingestion and vector embedding.
+
+```
+                                 ┌────────────────────────┐
+                                 │    Next.js Web App     │
+                                 │   (Course Player UI)   │
+                                 └───────────┬────────────┘
+                                             │
+                                   HTTP / REST (JWT Auth)
+                                             │
+                                             ▼
+                                 ┌────────────────────────┐
+                                 │   NestJS API Gateway   │
+                                 │     (Port: 3333)       │
+                                 └─────┬────────────┬─────┘
+                                       │            │
+                 gRPC (AIService / Port: 50054)     │ RabbitMQ Events
+                                       │            │ (CloudAMQP / Local)
+                                       ▼            ▼
+ ┌──────────────────────────────────────────────────────────────────────────────────┐
+ │                            NexusEd GenAI Service                                 │
+ │                                                                                  │
+ │   ┌───────────────────────┐                    ┌─────────────────────────────┐   │
+ │   │  FastAPI REST Server  │                    │      Async Event Worker     │   │
+ │   │     (Port: 8001)      │                    │     (aio-pika Consumer)     │   │
+ │   └───────────┬───────────┘                    └──────────────┬──────────────┘   │
+ │               │                                               │                  │
+ │               ▼                                               ▼                  │
+ │   ┌───────────────────────┐                    ┌─────────────────────────────┐   │
+ │   │   LangChain RAG Chain │                    │    Ingestion & Chunker      │   │
+ │   │  • Dynamic Prompts    │                    │  • YouTube Captions API     │   │
+ │   │  • Course Filtered    │                    │  • Groq Whisper Fallback    │   │
+ │   │  • Multi-LLM Factory  │                    │  • Recursive Character      │   │
+ │   └───────────┬───────────┘                    └──────────────┬──────────────┘   │
+ └───────────────┼───────────────────────────────────────────────┼──────────────────┘
+                 │                                               │
+                 │ Embeddings & Similarity Search                │ Vector Upsert
+                 ▼                                               ▼
+   ┌───────────────────────────┐                   ┌───────────────────────────┐
+   │       Qdrant Cloud        │                   │    HuggingFace API        │
+   │ (Collection: nexused_lectures) │              │ (all-MiniLM-L6-v2)        │
+   └─────────────┬─────────────┘                   └───────────────────────────┘
+                 │
+                 ▼
+   ┌───────────────────────────┐
+   │    Groq / LLM Provider    │
+   │ (Qwen 2.5 / LLaMA 3.3 /   │
+   │  Gemini / OpenAI / Ollama)│
+   └───────────────────────────┘
+```
+
+---
+
+## 🔄 Core Workflows
+
+### 1. 📥 Asynchronous Lecture Ingestion Pipeline
+Triggered automatically when an instructor uploads or links a lecture video (`video.uploaded` event):
+
+```
+RabbitMQ: video.uploaded
+       │
+       ▼
+ [consumer.py] ── Receives payload (courseId, lectureId, videoUrl)
+       │
+       ▼
+ [transcriber.py] ── 1. YouTube Transcript API (Zero-cost subtitle extraction)
+       │              2. Fallback: yt-dlp audio download + Groq Whisper API
+       ▼
+ [chunker.py] ──── Splits transcript into 500-token chunks with 50-token overlap
+       │              (LangChain RecursiveCharacterTextSplitter)
+       ▼
+ [embedder.py] ─── Computes 384-dimensional dense vector embeddings via 
+       │              HuggingFace Inference API (sentence-transformers/all-MiniLM-L6-v2)
+       ▼
+ [Qdrant Cloud] ── Upserts vectors with courseId, lectureId, and chunkIndex metadata
+       │
+       ▼
+RabbitMQ: ai.processing.complete ── Notifies Course Service of completion
+```
+
+---
+
+### 2. ⚡ Real-Time RAG Query Pipeline
+Triggered when a student asks a question in the AI Tutor drawer:
+
+```
+Student Question: "What is DBMS and what are its key responsibilities?"
+       │
+       ▼
+[API Gateway] ── Authenticates student & routes to GenAI Service via gRPC
+       │
+       ▼
+[retriever.py] ─ 1. Embeds question using all-MiniLM-L6-v2
+                 2. Queries Qdrant with metadata authorization filter:
+                    Filter: metadata.courseId == course_id
+                 3. Fetches Top-K (default: 5) semantically relevant chunks
+       │
+       ▼
+[prompt.py] ──── Injects lecture chunks + question into strict grounding prompt
+       │
+       ▼
+[chain.py] ───── Groq Cloud LLM (or Gemini/OpenAI/Ollama) synthesizes answer
+       │
+       ▼
+[Course Player] ─ Frontend renders answer with MarkdownRenderer:
+                 • High-contrast bold terminology
+                 • Formatted bullet & numbered lists
+                 • Syntax-highlighted code blocks with copy button
+```
+
+---
+
+## 📁 Project Structure
 
 ```
 apps/genai-service/
-├── main.py                          # Entry point: FastAPI + gRPC servers (asyncio.gather)
-├── requirements.txt                 # All Python dependencies
-├── .env.example                     # Environment variable template (copy to .env)
+├── main.py                          # Dual server bootstrap: FastAPI + gRPC + RabbitMQ
+├── requirements.txt                 # Python dependencies
+├── .env.example                     # Environment template
 │
 ├── scripts/
 │   └── generate_protos.py           # Compiles ai.proto → Python gRPC stubs
 │
-├── generated/                       # Auto-generated gRPC stubs (run generate_protos.py)
+├── generated/                       # Auto-generated gRPC stubs
 │   ├── __init__.py
 │   ├── ai_pb2.py
 │   └── ai_pb2_grpc.py
 │
 └── app/
     ├── __init__.py
-    ├── config.py                    # All settings loaded from .env (pydantic-settings)
+    ├── config.py                    # Pydantic v2 settings & environment manager
     │
-    ├── api/                         # FastAPI REST layer
+    ├── api/                         # FastAPI REST Layer
     │   ├── __init__.py
     │   └── routes/
     │       ├── __init__.py
-    │       └── query.py             # POST /api/v1/query — RAG question answering
+    │       └── query.py             # POST /api/v1/query endpoint
     │
-    ├── ingestion/                   # Ingestion Pipeline (async, event-driven)
+    ├── ingestion/                   # Asynchronous Ingestion Engine
     │   ├── __init__.py
-    │   ├── consumer.py              # RabbitMQ event consumer (aio-pika)
-    │   ├── transcriber.py           # YouTube Transcript API fetcher
-    │   ├── chunker.py               # LangChain RecursiveCharacterTextSplitter
-    │   └── embedder.py              # LangChain HuggingFaceEmbeddings → ChromaDB
+    │   ├── consumer.py              # RabbitMQ consumer & publisher (aio-pika)
+    │   ├── transcriber.py           # YouTube Captions + Groq Whisper fallback
+    │   ├── chunker.py               # LangChain text splitter
+    │   └── embedder.py              # HF Inference API embeddings + Qdrant upsert
     │
-    ├── rag/                         # RAG Query Pipeline
+    ├── rag/                         # Retrieval-Augmented Generation Engine
     │   ├── __init__.py
-    │   ├── prompt.py                # LangChain ChatPromptTemplate (system + human)
-    │   ├── retriever.py             # LangChain Chroma retriever (courseId filter)
-    │   └── chain.py                 # Full RAG chain + LLM factory (Gemini/OpenAI/Ollama)
+    │   ├── prompt.py                # System & student prompt templates
+    │   ├── retriever.py             # Qdrant vector search with courseId filtering
+    │   └── chain.py                 # Multi-provider LLM chain factory
     │
-    ├── db/
+    ├── db/                          # Vector DB Client
     │   ├── __init__.py
-    │   └── chroma.py                # ChromaDB HttpClient singleton
+    │   └── qdrant.py                # Qdrant client singleton & collection initialization
     │
-    └── grpc/
+    └── grpc/                        # gRPC Microservice Layer
         ├── __init__.py
-        └── ai_servicer.py           # gRPC AIService implementaton (bridges → RAG chain)
-```
-
-> **Shared libs** used by this service:
-> ```
-> libs/shared/proto/ai.proto        ← gRPC contract definition
-> libs/python-ml-core/              ← Shared chunking, preprocessing, embedding utils
-> ```
-
----
-
-## 🔄 Step-by-Step: Ingestion Pipeline
-
-Triggered by a `VideoUploaded` event from RabbitMQ:
-
-```
-Step 1 — Event Consumer
-  RabbitMQ (queue: video.uploaded)
-        │
-        ▼ consumer.py receives VideoUploaded event
-
-Step 2 — YouTube Transcription
-  transcriber.py
-        │  extract_video_id(videoUrl)
-        │  YouTubeTranscriptApi.list_transcripts(video_id)
-        ▼  Returns full transcript text (string)
-
-Step 3 — Text Chunking
-  chunker.py
-        │  LangChain RecursiveCharacterTextSplitter
-        │  chunk_size=500, chunk_overlap=50
-        ▼  Returns List[Document] with courseId + lectureId metadata
-
-Step 4 — Embedding + Storage
-  embedder.py
-        │  LangChain HuggingFaceEmbeddings (all-MiniLM-L6-v2)
-        │  Converts each chunk → embedding vector
-        ▼  Stored in ChromaDB with courseId/lectureId/chunkIndex metadata
-
-Step 5 — Completion Event
-  consumer.py
-        │  Publishes AIProcessingComplete event
-        ▼  RabbitMQ (queue: ai.processing.complete)
+        └── ai_servicer.py           # Implements AIService (QueryCourse & IngestionStatus)
 ```
 
 ---
 
-## 🔎 Step-by-Step: RAG Query Pipeline
+## 🛠️ Technology Stack
 
-Triggered by a student's question (via REST or gRPC):
-
-```
-Step 1 — Receive Question
-  POST /api/v1/query  { courseId, question, lectureId? }
-      OR
-  gRPC AIService.QueryCourse(QueryRequest)
-
-Step 2 — Embed the Question
-  retriever.py
-        │  Same HuggingFaceEmbeddings model (all-MiniLM-L6-v2)
-        ▼  Question → embedding vector
-
-Step 3 — Retrieve Relevant Chunks
-  retriever.py
-        │  LangChain Chroma retriever
-        │  Filter: { courseId: <id> } (+ lectureId if specified)
-        ▼  Top-K semantically similar lecture chunks from ChromaDB
-
-Step 4 — Build RAG Prompt
-  prompt.py
-        │  ChatPromptTemplate (system + human messages)
-        │  System: "Answer only from the provided lecture context"
-        ▼  Prompt = context chunks + student question
-
-Step 5 — LLM Generation
-  chain.py (LLM Factory)
-        │  LLM_PROVIDER=gemini  → ChatGoogleGenerativeAI
-        │  LLM_PROVIDER=openai  → ChatOpenAI
-        │  LLM_PROVIDER=ollama  → ChatOllama
-        ▼  LLM generates answer grounded in lecture chunks
-
-Step 6 — Return Answer
-  { answer: "...", sources: ["lecture:X:chunk:Y", ...] }
-```
+| Domain | Technology | Purpose |
+|---|---|---|
+| **Framework** | [FastAPI](https://fastapi.tiangolo.com/) | High-performance async REST API & Swagger UI |
+| **RPC** | [gRPC](https://grpc.io/) / [Protobuf](https://protobuf.dev/) | Sub-millisecond internal microservice communication |
+| **Orchestration** | [LangChain](https://www.langchain.com/) | RAG chains, prompt management, and retrievers |
+| **Vector Store** | [Qdrant Cloud](https://qdrant.tech/) | Managed vector database with payload filtering |
+| **Embeddings** | [Hugging Face](https://huggingface.co/) | `sentence-transformers/all-MiniLM-L6-v2` via Serverless Inference API |
+| **LLM Inference** | [Groq Cloud](https://groq.com/) | Ultra-low latency inference (`llama-3.3-70b-versatile`, `qwen/qwen3.8-27b`) |
+| **Audio ASR** | [Groq Whisper](https://groq.com/) | `whisper-large-v3` fallback for videos without native subtitles |
+| **Messaging** | [RabbitMQ](https://www.rabbitmq.com/) + [aio-pika](https://aio-pika.readthedocs.io/) | Asynchronous, decoupled ingestion events |
+| **Video Extraction**| [yt-dlp](https://github.com/yt-dlp/yt-dlp) + [youtube-transcript-api](https://github.com/jdepoix/youtube-transcript-api) | Resilient subtitle fetching and audio extraction |
 
 ---
 
-## ⚙️ Setup
+## 🚀 Getting Started
 
 ### 1. Prerequisites
+- **Python 3.11+** installed
+- **Qdrant Cloud** cluster URL & API key (or local Docker Qdrant on port 6333)
+- **RabbitMQ** instance (CloudAMQP or local Docker on port 5672)
+- **Groq API Key** (Free tier available at [console.groq.com](https://console.groq.com))
+- **Hugging Face Token** (from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens))
 
-- Python 3.11+
-- Running ChromaDB server (`docker run -p 8000:8000 chromadb/chroma`)
-- Running RabbitMQ (`docker run -p 5672:5672 rabbitmq:3-management`)
+---
 
-### 2. Install dependencies
+### 2. Setup Virtual Environment & Install Dependencies
 
-```bash
-cd apps/genai-service
+#### On Windows (PowerShell):
+```powershell
+cd apps\genai-service
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+.\.venv\Scripts\Activate.ps1
+
+# Install requirements
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment
-
+#### On Linux / macOS (Bash):
 ```bash
-cp .env.example .env
-# Edit .env — add your GOOGLE_API_KEY and confirm other settings
+cd apps/genai-service
+
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install requirements
+pip install -r requirements.txt
 ```
 
-### 4. Generate gRPC stubs
+---
 
+### 3. Configure Environment Variables
+
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+
+Configure the following required keys in your `.env`:
+```env
+APP_NAME=nexused-genai-service
+APP_ENV=development
+APP_PORT=8001
+GRPC_PORT=50054
+
+# LLM Provider (groq | gemini | openai | ollama)
+LLM_PROVIDER=groq
+LLM_MODEL=llama-3.3-70b-versatile
+GROQ_API_KEY=gsk_your_groq_api_key
+
+# Hugging Face Embeddings
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+HUGGING_FACE_API=hf_your_huggingface_token
+
+# Qdrant Cloud Vector Database
+QDRANT_URL=https://your-cluster-id.us-east4-0.gcp.cloud.qdrant.io:6333
+QDRANT_API_KEY=your_qdrant_api_key
+QDRANT_COLLECTION_NAME=nexused_lectures
+
+# RabbitMQ
+RABBITMQ_URL=amqps://user:password@hostname/vhost
+VIDEO_UPLOADED_QUEUE=video.uploaded
+AI_PROCESSING_COMPLETE_QUEUE=ai.processing.complete
+```
+
+---
+
+### 4. Compile Protobuf Definitions
+
+Generate the Python gRPC client and server stubs:
 ```bash
 python scripts/generate_protos.py
 ```
 
 This compiles `libs/shared/proto/ai.proto` into `generated/ai_pb2.py` and `generated/ai_pb2_grpc.py`.
 
-### 5. Run the service
+---
+
+### 5. Run the Service
 
 ```bash
 python main.py
 ```
 
-This starts:
-- **FastAPI HTTP** on `http://localhost:8001` (docs at `/docs`)
-- **gRPC server** on port `50054`
-- **RabbitMQ consumer** (background task)
+This concurrently boots:
+- 🚀 **FastAPI HTTP Server** on `http://localhost:8001` (Interactive Swagger docs: `http://localhost:8001/docs`)
+- ⚡ **gRPC Server** on `0.0.0.0:50054`
+- 🐰 **RabbitMQ Event Consumer** listening for `video.uploaded` messages
 
 ---
 
-## 🌐 API Reference
+## 📡 API Reference
 
-### REST
+### REST Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/query` | RAG question answering |
-| `GET` | `/health` | Health check |
-| `GET` | `/docs` | Swagger UI |
+#### `POST /api/v1/query`
+Answers questions grounded strictly in the course's lecture context.
 
-**POST /api/v1/query**
+**Request Body:**
 ```json
-// Request
 {
-  "courseId": "course-123",
-  "question": "Explain the producer-consumer problem from this lecture.",
-  "lectureId": "lecture-456"   // optional
-}
-
-// Response
-{
-  "answer": "The producer-consumer problem is...",
-  "sources": ["lecture:456:chunk:3", "lecture:456:chunk:7"],
-  "courseId": "course-123",
-  "lectureId": "lecture-456"
+  "courseId": "44503bc4-ddd3-456d-8260-559121b1afe8",
+  "question": "What is DBMS and what are its key responsibilities?",
+  "lectureId": "0b740a4f-94e0-4794-8af0-b65ca7100a17"
 }
 ```
 
-### gRPC
+**Response:**
+```json
+{
+  "answer": "Based on the lecture context, DBMS (Database Management System) is defined as...",
+  "sources": [
+    "lecture:0b740a4f:chunk:0",
+    "lecture:0b740a4f:chunk:1"
+  ],
+  "courseId": "44503bc4-ddd3-456d-8260-559121b1afe8",
+  "lectureId": "0b740a4f-94e0-4794-8af0-b65ca7100a17"
+}
+```
 
-Defined in `libs/shared/proto/ai.proto`:
+#### `GET /health`
+Returns service health and active configuration status.
+
+---
+
+### gRPC Contract (`ai.proto`)
 
 ```protobuf
+syntax = "proto3";
+
+package ai;
+
 service AIService {
-  rpc QueryCourse (QueryRequest) returns (QueryResponse) {}
-  rpc GetIngestionStatus (IngestionStatusRequest) returns (IngestionStatusResponse) {}
+  rpc QueryCourse (QueryRequest) returns (QueryResponse);
+  rpc GetIngestionStatus (IngestionStatusRequest) returns (IngestionStatusResponse);
+}
+
+message QueryRequest {
+  string course_id = 1;
+  string question = 2;
+  optional string lecture_id = 3;
+}
+
+message QueryResponse {
+  string answer = 1;
+  repeated string sources = 2;
+  string course_id = 3;
+  optional string lecture_id = 4;
 }
 ```
 
 ---
 
-## 🔧 Technology Stack
+## 🔒 Security & Authorization
 
-| Technology | Role |
-|-----------|------|
-| **FastAPI** | HTTP API server |
-| **gRPC / ai.proto** | API Gateway communication |
-| **LangChain** | RAG orchestration (chain, retriever, prompt) |
-| **HuggingFaceEmbeddings** | LangChain-wrapped SentenceTransformers (all-MiniLM-L6-v2) |
-| **LangChain-Chroma** | Vector store integration |
-| **ChromaDB** | Vector storage and similarity search |
-| **ChatGroq** | Default cloud LLM (llama-3.3-70b-versatile) — swappable via env |
-| **youtube-transcript-api** | YouTube caption fetching (no Whisper needed) |
-| **aio-pika** | Async RabbitMQ consumer |
-| **pydantic-settings** | Environment variable configuration |
+1. **Course-Level Isolation**: Every retrieval query in Qdrant executes with a mandatory payload filter:
+   ```python
+   rest.FieldCondition(
+       key="metadata.courseId",
+       match=rest.MatchValue(value=course_id)
+   )
+   ```
+   This prevents data leakage across different courses and ensures students can only retrieve information from courses they are enrolled in.
+2. **Hallucination Prevention**: The system prompt enforces that the model must strictly answer using the provided lecture context. If the concept is not present, it gracefully states that information is not available in the lecture.
 
 ---
 
-## 🔀 Swapping the LLM
+## 🔄 Multi-Provider LLM Switching
 
-Change `LLM_PROVIDER` in `.env` — no code changes needed:
+Switch between different LLM providers seamlessly by editing `.env`:
 
 ```env
-# Use Groq (default — ultra-fast, free tier available)
+# Groq Cloud (Recommended for speed & cost)
 LLM_PROVIDER=groq
 LLM_MODEL=llama-3.3-70b-versatile
-GROQ_API_KEY=your-key
+GROQ_API_KEY=gsk_...
 
-# Use Gemini
+# Google Gemini
 LLM_PROVIDER=gemini
 LLM_MODEL=gemini-1.5-flash
-GOOGLE_API_KEY=your-key
+GOOGLE_API_KEY=AIza...
 
-# Use OpenAI
+# OpenAI
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-4o-mini
-OPENAI_API_KEY=your-key
+OPENAI_API_KEY=sk-...
 
-# Use local Ollama
+# Local Ollama
 LLM_PROVIDER=ollama
-OLLAMA_MODEL=llama3
+LLM_MODEL=llama3
 OLLAMA_URL=http://localhost:11434
 ```
-
----
-
-## 🛡️ RAG Authorization
-
-Per the NexusEd security design, every ChromaDB retrieval query is **filtered by `courseId`**.
-
-This means:
-- A student can only retrieve lecture chunks from courses they are authorized to access
-- Authorization is enforced at the API Gateway level (JWT + enrollment check) before the query reaches this service
-- The `courseId` is always passed into the retriever's metadata filter — never retrieved globally
-
----
-
-## 📦 Related Files
-
-| File | Description |
-|------|-------------|
-| [`libs/shared/proto/ai.proto`](../../libs/shared/proto/ai.proto) | gRPC service contract |
-| [`libs/python-ml-core/`](../../libs/python-ml-core/) | Shared chunking, preprocessing, embedding |
-| [`apps/media-service/`](../media-service/) | Publishes `VideoUploaded` events |

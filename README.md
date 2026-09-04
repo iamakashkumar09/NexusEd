@@ -15,7 +15,7 @@ The platform combines traditional e-learning capabilities such as users, courses
 - **gRPC** for synchronous communication between the API Gateway and backend services
 - **RabbitMQ/Kafka** for asynchronous event-driven communication
 - **PostgreSQL** for relational business data, including the Course Service
-- **AWS S3** for video/media storage
+- **YouTube** for video/media storage and playback
 - **GenAI service** built with Python and FastAPI
 - **LangChain-based RAG pipeline**
 - **SentenceTransformers** for text embeddings
@@ -62,10 +62,10 @@ The platform combines traditional e-learning capabilities such as users, courses
                          │       gRPC Server        │
                          └────────────┬────────────┘
                                       │
-                           Video / Media Upload
+                           Video / Media Upload (or Link)
                                       │
                                       ▼
-                                  AWS S3
+                                  YouTube
                                       │
                                       │ VideoUploaded
                                       ▼
@@ -247,10 +247,10 @@ It contains two primary workflows:
 The ingestion pipeline processes uploaded course videos.
 
 ```text
-Video Uploaded
+Video Uploaded / Linked
       │
       ▼
-    AWS S3
+    YouTube
       │
       ▼
 VideoUploaded Event
@@ -279,8 +279,8 @@ ChromaDB
 
 ### Step-by-step
 
-1. Instructor uploads a lecture.
-2. Media Service stores the video in AWS S3.
+1. Instructor uploads or links a YouTube lecture.
+2. Media Service stores the YouTube metadata and link.
 3. Media Service publishes `VideoUploaded`.
 4. GenAI Service consumes the event.
 5. The video is transcribed.
@@ -487,7 +487,7 @@ MongoDB can absolutely work, but PostgreSQL provides a strong foundation for:
 You can still use specialized stores where they provide a clear benefit, such as:
 
 ```text
-AWS S3    → Videos
+YouTube   → Videos
 ChromaDB  → Embeddings
 PostgreSQL → Business data
 ```
@@ -639,7 +639,7 @@ Media Service
     │                  └── Media Metadata
     │
     ▼
-AWS S3
+ YouTube
     │
     │ VideoUploaded
     ▼
@@ -754,7 +754,7 @@ Important security considerations include:
 - Rate limiting
 - Secure gRPC communication
 - Private internal service networking
-- AWS S3 signed URLs
+- YouTube IFrame API integration for secure streaming
 - Secrets through environment variables/secrets managers
 - Course-level authorization for RAG retrieval
 - Validation of uploaded media
@@ -800,7 +800,7 @@ This should be enforced through metadata filtering and authorization checks rath
 
 - **PostgreSQL**
 - **ChromaDB**
-- **AWS S3**
+- **YouTube**
 
 ## Infrastructure / Tooling
 
@@ -815,28 +815,38 @@ This should be enforced through metadata filtering and authorization checks rath
 
 ### Core Platform
 
-- [ ] Nx workspace setup
-- [ ] API Gateway
-- [ ] User Service
-- [ ] Course Service
+- [x] Nx workspace setup
+- [x] API Gateway
+- [x] User Service
+- [x] Course Service
+- [x] Auth Service
+- [x] Media Service
 - [ ] Payment Service
-- [ ] Media Service
-- [ ] PostgreSQL schemas
-- [ ] Authentication and authorization
+- [x] PostgreSQL schemas (Prisma)
+- [x] Authentication and authorization
+
+### Frontend (Web App)
+- [x] Next.js Application Setup
+- [x] Polished, Smooth UI with Dark Mode
+- [x] Global Dashboard Layout & Shell
+- [x] Custom Video Player (YouTube IFrame API integration)
+- [x] Advanced Player Controls (Quality, Speed, Volume, Picture-in-Picture)
+- [x] Course Progress Tracking & State Sync
+- [x] Seamless Page Transitions and Animations
 
 ### Communication
 
-- [ ] gRPC contracts
-- [ ] Shared protobuf definitions
+- [x] gRPC contracts
+- [x] Shared protobuf definitions
 - [ ] RabbitMQ/Kafka integration
 - [ ] Standard event contracts
 
 ### Media
 
-- [ ] AWS S3 integration
-- [ ] Video upload
-- [ ] Media metadata
-- [ ] Upload events
+- [x] YouTube Data API / IFrame API integration
+- [ ] YouTube video upload/link management
+- [ ] Media metadata syncing
+- [ ] Upload events (for AI processing pipeline)
 
 ### GenAI
 

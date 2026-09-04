@@ -396,7 +396,7 @@ function ControlBar({
 
 interface AIMessage { role: 'user' | 'ai'; text: string; }
 
-function AIPanelContent({ courseTitle, lectureTitle }: { courseTitle: string; lectureTitle: string }) {
+function AIPanelContent({ courseId, lectureId, courseTitle, lectureTitle }: { courseId: string; lectureId: string; courseTitle: string; lectureTitle: string }) {
   const [messages, setMessages] = useState<AIMessage[]>([
     { role: 'ai', text: `Hi! I'm your AI Tutor for **${courseTitle}**. Ask me anything about this lecture — concepts, code, or career advice!` }
   ]);
@@ -418,20 +418,33 @@ function AIPanelContent({ courseTitle, lectureTitle }: { courseTitle: string; le
     }
   };
 
-  const send = () => {
+  const send = async () => {
     const q = input.trim();
     if (!q) return;
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     setIsTyping(true);
-    setTimeout(() => {
+    
+    try {
+      const res = await fetch(`/api/ai/${courseId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q, lectureId })
+      });
+      const data = await res.json();
+      
       setIsTyping(false);
-      setMessages(prev => [...prev, {
-        role: 'ai',
-        text: `Great question about "${q}"! Stay tuned — this panel is ready for your questions about ${lectureTitle}.`,
-      }]);
-    }, 1200);
+      if (!res.ok) {
+        setMessages(prev => [...prev, { role: 'ai', text: `Sorry, I couldn't process that: ${data.error || 'Unknown error'}` }]);
+        return;
+      }
+      
+      setMessages(prev => [...prev, { role: 'ai', text: data.answer }]);
+    } catch (err) {
+      setIsTyping(false);
+      setMessages(prev => [...prev, { role: 'ai', text: 'Sorry, the AI service is currently unreachable.' }]);
+    }
   };
 
   const SUGGESTIONS = ['Explain this concept', 'Give me an example', 'Summarize this'];
@@ -823,7 +836,7 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
             {/* AI Tab (Mobile only) */}
             {activeTab === 'ai' && (
               <div className="absolute inset-0 lg:hidden">
-                 <AIPanelContent courseTitle={course.title} lectureTitle={activeLecture?.title || ''} />
+                 <AIPanelContent courseId={course.id} lectureId={activeLecture?.id || ''} courseTitle={course.title} lectureTitle={activeLecture?.title || ''} />
               </div>
             )}
           </div>
@@ -877,7 +890,7 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
       {/* ── AI Tutor Floating Panel (Desktop only) ────────────────────────────── */}
       <div className="hidden lg:block">
         <div className={`fixed bottom-24 right-8 z-[99] w-[400px] h-[65vh] max-h-[600px] shadow-[0_32px_80px_rgba(0,0,0,0.5)] border border-hairline-strong rounded-2xl overflow-hidden transition-all duration-300 origin-bottom-right ${activeTab === 'ai' ? 'scale-100 opacity-100 pointer-events-auto translate-y-0' : 'scale-95 opacity-0 pointer-events-none translate-y-4'}`}>
-           <AIPanelContent courseTitle={course.title} lectureTitle={activeLecture?.title || ''} />
+           <AIPanelContent courseId={course.id} lectureId={activeLecture?.id || ''} courseTitle={course.title} lectureTitle={activeLecture?.title || ''} />
         </div>
         <button
           onClick={() => setActiveTab(activeTab === 'ai' ? 'about' : 'ai')}

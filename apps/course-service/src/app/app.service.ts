@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
+import { RabbitService } from './rabbit.service';
 
 function mapCourse(c: any) {
   if (!c) return c;
@@ -25,7 +26,10 @@ function mapCourse(c: any) {
 
 @Injectable()
 export class AppService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly rabbitService: RabbitService
+  ) {}
 
   async createCourse(data: { instructorId: string; title: string; subtitle?: string; category?: string; level?: string; language?: string; description?: string; thumbnailUrl?: string; price?: number; status?: string; sections?: any[] }) {
     try {
@@ -57,8 +61,28 @@ export class AppService {
             }))
           } : undefined
         },
+        include: {
+          sections: {
+            include: {
+              lectures: true
+            }
+          }
+        }
       });
       console.log('Successfully created course:', result.id);
+
+      if (result.sections) {
+        for (const section of result.sections) {
+          for (const lecture of section.lectures) {
+            if (lecture.videoUrl) {
+              this.rabbitService.publishVideoUploaded(result.id, lecture.id, lecture.videoUrl).catch(err => {
+                console.error('Failed to emit video.uploaded', err);
+              });
+            }
+          }
+        }
+      }
+
       return mapCourse(result);
     } catch (error) {
       console.error('Error creating course:', error);
@@ -169,7 +193,7 @@ export class AppService {
     const section = await this.prisma.section.findUnique({ where: { id: data.sectionId }, include: { course: true } });
     if (!section || section.course.instructorId !== data.instructorId) throw new Error('Unauthorized or Section not found');
 
-    return this.prisma.lecture.create({
+    const lecture = await this.prisma.lecture.create({
       data: {
         sectionId: data.sectionId,
         title: data.title,
@@ -178,13 +202,19 @@ export class AppService {
         order: data.order,
       }
     });
+
+    if (lecture.videoUrl) {
+      this.rabbitService.publishVideoUploaded(section.courseId, lecture.id, lecture.videoUrl).catch(err => console.error(err));
+    }
+
+    return lecture;
   }
 
   async updateLecture(data: { id: string; instructorId: string; title?: string; videoUrl?: string; videoDuration?: number; order?: number }) {
     const lecture = await this.prisma.lecture.findUnique({ where: { id: data.id }, include: { section: { include: { course: true } } } });
     if (!lecture || lecture.section.course.instructorId !== data.instructorId) throw new Error('Unauthorized or Lecture not found');
 
-    return this.prisma.lecture.update({
+    const updated = await this.prisma.lecture.update({
       where: { id: data.id },
       data: {
         title: data.title,
@@ -193,6 +223,12 @@ export class AppService {
         order: data.order,
       }
     });
+
+    if (data.videoUrl && data.videoUrl !== lecture.videoUrl) {
+      this.rabbitService.publishVideoUploaded(lecture.section.courseId, updated.id, data.videoUrl).catch(err => console.error(err));
+    }
+
+    return updated;
   }
 
   // Student Actions

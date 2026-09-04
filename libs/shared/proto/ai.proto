@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package ai;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AIService — gRPC contract between API Gateway and GenAI Service
+// ─────────────────────────────────────────────────────────────────────────────
+
+service AIService {
+  // RAG question answering for a course
+  rpc QueryCourse (QueryRequest) returns (QueryResponse) {}
+
+  // Check ingestion status for a lecture
+  rpc GetIngestionStatus (IngestionStatusRequest) returns (IngestionStatusResponse) {}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QueryCourse
+// ─────────────────────────────────────────────────────────────────────────────
+
+message QueryRequest {
+  string courseId  = 1;
+  string question  = 2;
+  string lectureId = 3; // optional — restrict retrieval to a specific lecture
+}
+
+message QueryResponse {
+  string          answer  = 1;
+  repeated string sources = 2; // chunk IDs / lecture references used
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GetIngestionStatus
+// ─────────────────────────────────────────────────────────────────────────────
+
+message IngestionStatusRequest {
+  string lectureId = 1;
+}
+
+message IngestionStatusResponse {
+  string status    = 1; // PENDING | PROCESSING | COMPLETE | FAILED
+  string lectureId = 2;
+  string message   = 3; // optional error/info message
+}

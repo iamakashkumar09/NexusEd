@@ -73,6 +73,14 @@ const FullscreenIcon = () => (
     <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
   </svg>
 );
+const ExitFullscreenIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="4 14 10 14 10 20" />
+    <polyline points="20 10 14 10 14 4" />
+    <line x1="14" y1="10" x2="21" y2="3" />
+    <line x1="3" y1="21" x2="10" y2="14" />
+  </svg>
+);
 const SkipIcon = ({ direction }: { direction: 'prev' | 'next' }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={direction === 'prev' ? '-scale-x-100' : ''}>
     <polygon points="5 4 15 12 5 20 5 4" className="opacity-60" />
@@ -125,26 +133,57 @@ function useYouTubePlayer(videoId: string | null, containerId: string, onEnded?:
     setCurrentTime(0);
     setDuration(0);
 
+    const disableCaptions = (player: any) => {
+      try {
+        if (typeof player?.unloadModule === 'function') {
+          player.unloadModule('captions');
+          player.unloadModule('cc');
+        }
+        if (typeof player?.setOption === 'function') {
+          player.setOption('captions', 'track', {});
+          player.setOption('cc', 'track', {});
+          player.setOption('captions', 'fontSize', 0);
+        }
+      } catch (err) {
+        // Ignore caption unload failures
+      }
+    };
+
     playerRef.current = new window.YT.Player(containerId, {
       videoId: vid,
       playerVars: {
-        autoplay: 1, controls: 0, disablekb: 1, modestbranding: 1, rel: 0,
-        showinfo: 0, iv_load_policy: 3, fs: 0, playsinline: 1, enablejsapi: 1,
+        autoplay: 1,
+        controls: 0,
+        disablekb: 1,
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+        fs: 0,
+        playsinline: 1,
+        enablejsapi: 1,
         origin: typeof window !== 'undefined' ? window.location.origin : '',
-        cc_load_policy: 0, hl: 'en',
+        cc_load_policy: 0,
+        cc_lang_pref: 'none',
+        hl: 'en',
       },
       events: {
         onReady: (e: any) => {
           setDuration(e.target.getDuration());
           e.target.setVolume(volume);
+          disableCaptions(e.target);
           setReady(true);
           e.target.playVideo();
+        },
+        onApiChange: (e: any) => {
+          disableCaptions(e.target);
         },
         onStateChange: (e: any) => {
           const state = e.data;
           if (state === 1) { // playing
             setPlaying(true);
             setDuration(e.target.getDuration());
+            disableCaptions(e.target);
             timerRef.current = setInterval(() => {
               setCurrentTime(e.target.getCurrentTime());
             }, 500);
@@ -218,39 +257,103 @@ function useYouTubePlayer(videoId: string | null, containerId: string, onEnded?:
     else { playerRef.current.mute(); setMuted(true); }
   }, [muted]);
 
-  const requestFullscreen = useCallback(() => {
-    const wrapper = document.getElementById('course-player-wrapper');
-    if (wrapper && wrapper.requestFullscreen) {
-      wrapper.requestFullscreen();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFs = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      setIsFullscreen(isFs);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const isFs = !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    );
+
+    if (isFs) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
     } else {
-      const iframe = document.getElementById(containerId) as HTMLIFrameElement;
-      if (iframe?.requestFullscreen) iframe.requestFullscreen();
+      const wrapper = document.getElementById('course-player-wrapper');
+      if (wrapper) {
+        if (wrapper.requestFullscreen) {
+          wrapper.requestFullscreen().catch(() => {});
+        } else if ((wrapper as any).webkitRequestFullscreen) {
+          (wrapper as any).webkitRequestFullscreen();
+        } else if ((wrapper as any).mozRequestFullScreen) {
+          (wrapper as any).mozRequestFullScreen();
+        } else if ((wrapper as any).msRequestFullscreen) {
+          (wrapper as any).msRequestFullscreen();
+        }
+      } else {
+        const iframe = document.getElementById(containerId) as HTMLIFrameElement;
+        if (iframe?.requestFullscreen) iframe.requestFullscreen().catch(() => {});
+      }
     }
   }, [containerId]);
 
   const setPlaybackRate = useCallback((rate: number) => {
-    if (!playerRef.current) return;
-    if (typeof playerRef.current.setPlaybackRate === 'function') {
-      playerRef.current.setPlaybackRate(rate);
+    try {
+      if (playerRef.current && typeof playerRef.current.setPlaybackRate === 'function') {
+        playerRef.current.setPlaybackRate(rate);
+      }
+    } catch (err) {
+      console.warn('Could not set YouTube playback rate', err);
     }
     setPlaybackRateState(rate);
   }, []);
 
   const setPlaybackQuality = useCallback((q: string) => {
-    if (!playerRef.current) return;
-    if (typeof playerRef.current.setPlaybackQuality === 'function') {
-      playerRef.current.setPlaybackQuality(q);
+    try {
+      if (playerRef.current) {
+        if (typeof playerRef.current.setPlaybackQuality === 'function') {
+          playerRef.current.setPlaybackQuality(q);
+        }
+        if (typeof playerRef.current.setPlaybackQualityRange === 'function') {
+          playerRef.current.setPlaybackQualityRange(q, q);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not set YouTube playback quality', err);
     }
     setQualityState(q);
   }, []);
 
-  return { ready, playing, currentTime, duration, volume, muted, togglePlay, seekTo, setVol, toggleMute, requestFullscreen, playbackRate, setPlaybackRate, quality, setPlaybackQuality };
+  return { ready, playing, currentTime, duration, volume, muted, togglePlay, seekTo, setVol, toggleMute, isFullscreen, toggleFullscreen, requestFullscreen: toggleFullscreen, playbackRate, setPlaybackRate, quality, setPlaybackQuality };
 }
 
 // ─── Custom Control Bar ───────────────────────────────────────────────────────
 
 function ControlBar({
-  playing, currentTime, duration, volume, muted, playbackRate, quality,
+  playing, currentTime, duration, volume, muted, playbackRate, quality, isFullscreen,
   onTogglePlay, onSeek, onVolumeChange, onToggleMute, onFullscreen, onPlaybackRateChange, onQualityChange,
   onPrev, onNext, hasPrev, hasNext,
 }: any) {
@@ -259,7 +362,24 @@ function ControlBar({
   const [hoverPct, setHoverPct] = useState(0);
   const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
   const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
+  const speedMenuRef = useRef<HTMLDivElement>(null);
+  const qualityMenuRef = useRef<HTMLDivElement>(null);
+
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node)) {
+        setSpeedMenuOpen(false);
+      }
+      if (qualityMenuRef.current && !qualityMenuRef.current.contains(e.target as Node)) {
+        setQualityMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSeekMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -267,11 +387,18 @@ function ControlBar({
     setHoverPct(pct);
   };
 
+  const isAnyMenuOpen = speedMenuOpen || qualityMenuOpen;
+
   return (
     <div
-      className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent px-4 pb-4 pt-10 z-10 transition-opacity duration-300 ${hovering ? 'opacity-100' : 'opacity-0 md:opacity-0 opacity-100'}`}
+      className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-4 pb-4 pt-12 z-20 transition-opacity duration-300 ${
+        hovering || isAnyMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 md:opacity-0 opacity-100 pointer-events-auto'
+      }`}
       onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
+      onMouseLeave={() => {
+        if (!isAnyMenuOpen) setHovering(false);
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Seek bar */}
       <div
@@ -281,6 +408,7 @@ function ControlBar({
         onMouseLeave={() => setSeekHover(false)}
         onMouseMove={handleSeekMove}
         onClick={(e) => {
+          e.stopPropagation();
           const rect = e.currentTarget.getBoundingClientRect();
           const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
           onSeek(pct * duration);
@@ -288,7 +416,7 @@ function ControlBar({
       >
         <div className="h-full bg-primary rounded-full transition-all duration-100" style={{ width: `${progress}%` }} />
         <div
-          className="absolute top-1/2 bg-white rounded-full transition-all duration-150 shadow-[0_0_4px_rgba(0,0,0,0.5)]"
+          className="absolute top-1/2 bg-white rounded-full transition-all duration-150 shadow-[0_0_6px_rgba(0,0,0,0.6)]"
           style={{
             left: `${progress}%`,
             transform: 'translate(-50%, -50%)',
@@ -299,7 +427,7 @@ function ControlBar({
         {/* Hover Time Tooltip */}
         {seekHover && (
           <div
-            className="absolute top-[-36px] bg-black/85 text-white text-xs font-semibold px-2 py-1 rounded-md pointer-events-none shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap"
+            className="absolute top-[-36px] bg-black/90 text-white text-xs font-semibold px-2 py-1 rounded-md pointer-events-none shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap border border-white/10"
             style={{ left: `${hoverPct * 100}%`, transform: 'translateX(-50%)' }}
           >
             {formatTime(hoverPct * duration)}
@@ -309,24 +437,46 @@ function ControlBar({
 
       {/* Controls row */}
       <div className="flex items-center gap-2">
-        <button onClick={onPrev} disabled={!hasPrev} className={`p-1.5 ${hasPrev ? 'text-white hover:text-white/80 cursor-pointer' : 'text-white/30 cursor-default'}`}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onPrev(); }}
+          disabled={!hasPrev}
+          className={`p-1.5 ${hasPrev ? 'text-white hover:text-white/80 cursor-pointer' : 'text-white/30 cursor-default'}`}
+        >
           <SkipIcon direction="prev" />
         </button>
 
-        <button onClick={onTogglePlay} className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0 cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.5)] hover:scale-105 transition-transform">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onTogglePlay(); }}
+          className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0 cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.5)] hover:scale-105 transition-transform"
+        >
           {playing ? <PauseIcon /> : <PlayIcon />}
         </button>
 
-        <button onClick={onNext} disabled={!hasNext} className={`p-1.5 ${hasNext ? 'text-white hover:text-white/80 cursor-pointer' : 'text-white/30 cursor-default'}`}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onNext(); }}
+          disabled={!hasNext}
+          className={`p-1.5 ${hasNext ? 'text-white hover:text-white/80 cursor-pointer' : 'text-white/30 cursor-default'}`}
+        >
           <SkipIcon direction="next" />
         </button>
 
-        <button onClick={onToggleMute} className="p-1.5 text-white cursor-pointer hover:text-white/80">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
+          className="p-1.5 text-white cursor-pointer hover:text-white/80"
+        >
           <VolumeIcon muted={muted} />
         </button>
         <input
-          type="range" min={0} max={100} value={muted ? 0 : volume}
-          onChange={e => onVolumeChange(Number(e.target.value))}
+          type="range"
+          min={0}
+          max={100}
+          value={muted ? 0 : volume}
+          onChange={(e) => onVolumeChange(Number(e.target.value))}
+          onClick={(e) => e.stopPropagation()}
           className="hidden sm:block w-[72px] accent-white cursor-pointer"
         />
 
@@ -337,19 +487,47 @@ function ControlBar({
         <div className="flex-1" />
 
         {/* Speed */}
-        <div className="relative" onMouseLeave={() => setSpeedMenuOpen(false)}>
-          <button onClick={() => { setSpeedMenuOpen(!speedMenuOpen); setQualityMenuOpen(false); }} className="text-white text-[13px] font-bold px-3 py-1.5 min-w-[44px] opacity-80 hover:opacity-100 transition-opacity">
-            {playbackRate}x
+        <div ref={speedMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSpeedMenuOpen((prev) => !prev);
+              setQualityMenuOpen(false);
+            }}
+            className={`text-white text-[13px] font-bold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+              speedMenuOpen
+                ? 'bg-white/20 border-primary shadow-[0_0_8px_rgba(94,106,210,0.4)]'
+                : 'bg-white/5 border-white/10 hover:bg-white/15'
+            }`}
+          >
+            <span>{playbackRate}x</span>
           </button>
           {speedMenuOpen && (
-            <div className="absolute bottom-full right-0 bg-[#1c1c1e]/95 backdrop-blur-xl rounded-xl overflow-hidden flex flex-col border border-white/10 min-w-[80px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] mb-2">
-              {[0.5, 1, 1.25, 1.5, 2].map(rate => (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-full right-0 mb-2 bg-[#1c1c1e] backdrop-blur-2xl rounded-xl overflow-hidden flex flex-col border border-white/20 min-w-[100px] shadow-[0_12px_36px_rgba(0,0,0,0.8)] z-50 animate-fade-in"
+            >
+              <div className="px-3 py-1.5 text-[10px] text-white/50 uppercase tracking-wider font-bold border-b border-white/10">
+                Speed
+              </div>
+              {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((rate) => (
                 <button
                   key={rate}
-                  onClick={() => { onPlaybackRateChange(rate); setSpeedMenuOpen(false); }}
-                  className={`text-left px-4 py-2.5 text-[13px] font-semibold text-white transition-colors ${rate === playbackRate ? 'bg-white/10' : 'hover:bg-white/15'}`}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPlaybackRateChange(rate);
+                    setSpeedMenuOpen(false);
+                  }}
+                  className={`text-left px-3.5 py-2 text-[13px] font-semibold text-white flex items-center justify-between transition-colors cursor-pointer ${
+                    rate === playbackRate ? 'bg-primary text-white font-bold' : 'hover:bg-white/15'
+                  }`}
                 >
-                  {rate}x
+                  <span>{rate}x</span>
+                  {rate === playbackRate && (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  )}
                 </button>
               ))}
             </div>
@@ -357,27 +535,56 @@ function ControlBar({
         </div>
 
         {/* Quality */}
-        <div className="relative" onMouseLeave={() => setQualityMenuOpen(false)}>
-          <button onClick={() => { setQualityMenuOpen(!qualityMenuOpen); setSpeedMenuOpen(false); }} className="text-white text-[13px] font-bold px-3 py-1.5 opacity-80 hover:opacity-100 transition-opacity flex items-center gap-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <div ref={qualityMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setQualityMenuOpen((prev) => !prev);
+              setSpeedMenuOpen(false);
+            }}
+            className={`text-white text-[13px] font-bold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
+              qualityMenuOpen
+                ? 'bg-white/20 border-primary shadow-[0_0_8px_rgba(94,106,210,0.4)]'
+                : 'bg-white/5 border-white/10 hover:bg-white/15'
+            }`}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+            <span className="text-[11px] uppercase tracking-wide">
+              {quality === 'auto' ? 'Auto' : quality.replace('hd', '').replace('large', '480p').replace('medium', '360p')}
+            </span>
           </button>
           {qualityMenuOpen && (
-            <div className="absolute bottom-full right-0 bg-[#1c1c1e]/95 backdrop-blur-xl rounded-xl overflow-hidden flex flex-col border border-white/10 min-w-[120px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] mb-2">
-              <div className="px-4 py-2 text-[11px] text-white/50 uppercase tracking-wider font-bold">Quality</div>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-full right-0 mb-2 bg-[#1c1c1e] backdrop-blur-2xl rounded-xl overflow-hidden flex flex-col border border-white/20 min-w-[130px] shadow-[0_12px_36px_rgba(0,0,0,0.8)] z-50 animate-fade-in"
+            >
+              <div className="px-3.5 py-1.5 text-[10px] text-white/50 uppercase tracking-wider font-bold border-b border-white/10">
+                Quality
+              </div>
               {[
-                { label: '1080p', value: 'hd1080' },
-                { label: '720p', value: 'hd720' },
+                { label: '1080p HD', value: 'hd1080' },
+                { label: '720p HD', value: 'hd720' },
                 { label: '480p', value: 'large' },
                 { label: '360p', value: 'medium' },
-                { label: 'Auto', value: 'auto' }
-              ].map(q => (
+                { label: 'Auto', value: 'auto' },
+              ].map((q) => (
                 <button
                   key={q.value}
-                  onClick={() => { if(onQualityChange) onQualityChange(q.value); setQualityMenuOpen(false); }}
-                  className={`text-left px-4 py-2.5 text-[13px] font-semibold text-white flex items-center gap-2 transition-colors ${quality === q.value ? 'bg-white/10' : 'hover:bg-white/15'}`}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onQualityChange) onQualityChange(q.value);
+                    setQualityMenuOpen(false);
+                  }}
+                  className={`text-left px-3.5 py-2 text-[13px] font-semibold text-white flex items-center justify-between transition-colors cursor-pointer ${
+                    quality === q.value ? 'bg-primary text-white font-bold' : 'hover:bg-white/15'
+                  }`}
                 >
-                  {quality === q.value ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg> : <div className="w-[14px] h-[14px]" />}
-                  {q.label}
+                  <span>{q.label}</span>
+                  {quality === q.value && (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  )}
                 </button>
               ))}
             </div>
@@ -385,8 +592,13 @@ function ControlBar({
         </div>
 
         {/* Fullscreen */}
-        <button onClick={onFullscreen} className="p-1.5 text-white hover:text-white/80 cursor-pointer">
-          <FullscreenIcon />
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onFullscreen(); }}
+          className="p-1.5 text-white hover:text-white/80 cursor-pointer transition-transform active:scale-95"
+          title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+        >
+          {isFullscreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}
         </button>
       </div>
     </div>
@@ -602,7 +814,7 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
 
   const {
     ready, playing, currentTime, duration, volume, muted,
-    togglePlay, seekTo, setVol, toggleMute, requestFullscreen,
+    togglePlay, seekTo, setVol, toggleMute, isFullscreen, toggleFullscreen,
     playbackRate, setPlaybackRate, quality, setPlaybackQuality
   } = useYouTubePlayer(videoId, 'yt-player-frame', () => {
     if (activeLecture && !completed.has(activeLecture.id)) {
@@ -695,7 +907,7 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
               </div>
 
               {/* Interaction interceptor */}
-              <div className="absolute inset-0 z-[5] cursor-pointer" onClick={togglePlay} onDoubleClick={requestFullscreen} />
+              <div className="absolute inset-0 z-[5] cursor-pointer" onClick={togglePlay} onDoubleClick={toggleFullscreen} />
 
               {/* No video placeholder */}
               {!videoId && (
@@ -722,9 +934,10 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
                 <ControlBar
                   playing={playing} currentTime={currentTime} duration={duration}
                   volume={volume} muted={muted} playbackRate={playbackRate} quality={quality}
+                  isFullscreen={isFullscreen}
                   onTogglePlay={togglePlay} onSeek={seekTo}
                   onVolumeChange={setVol} onToggleMute={toggleMute}
-                  onFullscreen={requestFullscreen} onPlaybackRateChange={setPlaybackRate}
+                  onFullscreen={toggleFullscreen} onPlaybackRateChange={setPlaybackRate}
                   onQualityChange={setPlaybackQuality}
                   onPrev={goPrev} onNext={goNext}
                   hasPrev={hasPrev} hasNext={hasNext}

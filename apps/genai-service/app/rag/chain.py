@@ -45,6 +45,7 @@ def get_llm() -> BaseChatModel:
             model=settings.LLM_MODEL,
             groq_api_key=settings.GROQ_API_KEY,
             temperature=0.2,
+            max_tokens=800,
         )
 
     elif provider == "gemini":

@@ -10,6 +10,7 @@ import { JwtStrategy } from './module/auth/strategies/jwt.strategy';
 import { UserModule } from './module/user/user.module';
 import { CourseController } from './module/course/course.controller';
 import { MediaController } from './module/media/media.controller';
+import { AiController } from './module/ai/ai.controller';
 
 @Module({
   imports: [
@@ -43,9 +44,18 @@ import { MediaController } from './module/media/media.controller';
           url: '0.0.0.0:5004',
         },
       },
+      {
+        name: 'AI_SERVICE',
+        transport: Transport.GRPC,
+        options: {
+          package: 'ai',
+          protoPath: join(__dirname, '../../../libs/shared/proto/ai.proto'),
+          url: '0.0.0.0:50054',
+        },
+      },
     ]),
   ],
-  controllers: [AppController, AuthController, CourseController, MediaController],
+  controllers: [AppController, AuthController, CourseController, MediaController, AiController],
   providers: [AppService, JwtStrategy],
 })
 export class AppModule { }

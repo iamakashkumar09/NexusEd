@@ -9,10 +9,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: any) => {
           let token = null;
-          if (request && request.cookies) {
-            token = request.cookies['token'];
+          if (request?.cookies && (request.cookies['token'] || request.cookies['jwt'])) {
+            token = request.cookies['token'] || request.cookies['jwt'];
+          } else if (request?.headers?.cookie) {
+            const match = request.headers.cookie.match(/(?:^|;\s*)(?:token|jwt)=([^;]+)/);
+            if (match) {
+              token = decodeURIComponent(match[1]);
+            }
           }
-          return token || ExtractJwt.fromAuthHeaderAsBearerToken()(request);
+          if (!token && request?.headers?.authorization) {
+            const authHeader = request.headers.authorization;
+            if (authHeader.startsWith('Bearer ') && authHeader.slice(7).trim() !== 'undefined' && authHeader.slice(7).trim() !== 'null') {
+              token = authHeader.slice(7).trim();
+            }
+          }
+          return token;
         },
       ]),
       ignoreExpiration: false,

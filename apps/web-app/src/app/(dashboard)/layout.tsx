@@ -11,7 +11,7 @@ async function getProfile() {
   if (!token) return null;
 
   try {
-    const res = await fetch('http://localhost:3000/api/user/profile', {
+    const res = await fetch(`${process.env.API_GATEWAY_URL}/api/user/profile`, {
       headers: { Cookie: `token=${token}` },
       cache: 'no-store',
     });

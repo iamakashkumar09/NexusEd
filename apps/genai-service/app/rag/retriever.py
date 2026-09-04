@@ -76,6 +76,10 @@ def get_retriever(
         api_key=settings.QDRANT_API_KEY if settings.QDRANT_API_KEY else None
     )
 
+    from app.ingestion.embedder import ensure_collection
+
+    ensure_collection(client)
+
     vectorstore = QdrantVectorStore(
         client=client,
         collection_name=settings.QDRANT_COLLECTION_NAME,

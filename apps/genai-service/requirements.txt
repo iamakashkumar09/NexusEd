@@ -31,6 +31,8 @@ qdrant-client>=1.7.0
 
 # ─── YouTube Transcription ────────────────────────────────────────────────────
 youtube-transcript-api>=0.6.2
+yt-dlp>=2024.1.0               # Audio download fallback when YT captions unavailable
+groq>=0.9.0                    # Groq Whisper API for audio transcription fallback
 
 # ─── Message Broker ───────────────────────────────────────────────────────────
 aio-pika>=9.4.0                 # Async RabbitMQ client

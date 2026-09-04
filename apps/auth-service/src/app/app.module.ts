@@ -13,7 +13,7 @@ import { EmailService } from './email.service';
   imports: [
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'super-secret-local-jwt-key',
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '7d' },
     }),
     ClientsModule.register([
       {

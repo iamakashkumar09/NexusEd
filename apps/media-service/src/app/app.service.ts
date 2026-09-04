@@ -77,7 +77,7 @@ export class AppService {
           'Content-Type': 'application/json',
           'X-Upload-Content-Length': data.fileSize.toString(),
           'X-Upload-Content-Type': data.contentType || 'video/mp4',
-          'Origin': 'http://localhost:3001', // MUST match Authorized JavaScript origins in Google Cloud
+          'Origin': 'http://localhost:3000', // MUST match Authorized JavaScript origins in Google Cloud
         },
         body: JSON.stringify({
           snippet: {

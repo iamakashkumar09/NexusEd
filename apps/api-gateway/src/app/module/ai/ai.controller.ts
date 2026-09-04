@@ -14,12 +14,19 @@ import { ClientGrpc } from '@nestjs/microservices';
 import { AuthGuard } from '@nestjs/passport';
 import { firstValueFrom } from 'rxjs';
 
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DTOs
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class QueryCourseDto {
+  @IsString()
+  @IsNotEmpty()
   question: string;
+
+  @IsString()
+  @IsOptional()
   lectureId?: string;
 }
 
@@ -41,24 +48,22 @@ export class AiController implements OnModuleInit {
   /**
    * POST /api/ai/courses/:courseId/query
    * Student asks a question about a course — answered by the RAG pipeline.
-   * Requires JWT authentication so courseId can be validated against enrollment.
    */
-  @UseGuards(AuthGuard('jwt'))
   @Post('courses/:courseId/query')
   async queryCourse(
     @Req() req: any,
     @Param('courseId') courseId: string,
     @Body() body: QueryCourseDto,
   ) {
-    if (!body.question || body.question.trim().length < 5) {
+    if (!body.question || !body.question.trim()) {
       throw new HttpException(
-        'Question must be at least 5 characters.',
+        'Question cannot be empty.',
         HttpStatus.BAD_REQUEST,
       );
     }
 
     try {
-      const result = await firstValueFrom(
+      const result: any = await firstValueFrom(
         this.aiService.QueryCourse({
           courseId,
           question: body.question.trim(),

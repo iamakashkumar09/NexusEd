@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     LLM_PROVIDER: str = "groq"                    # groq | gemini | openai | ollama
-    LLM_MODEL: str = "llama-3.3-70b-versatile"   # Groq model
+    LLM_MODEL: str = "qwen/qwen3.8-27b"          # Groq model
 
     # Provider API keys
     GROQ_API_KEY: str = ""

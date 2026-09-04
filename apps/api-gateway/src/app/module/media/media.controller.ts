@@ -16,7 +16,7 @@ export class MediaController implements OnModuleInit {
   @UseGuards(AuthGuard('jwt'))
   @Post('upload-url')
   async getUploadUrl(@Body() body: { filename: string; contentType: string; fileSize: number }) {
-    const result = await firstValueFrom(this.mediaService.getUploadUrl(body));
+    const result = await firstValueFrom(this.mediaService.GetUploadUrl(body));
     return result;
   }
 }

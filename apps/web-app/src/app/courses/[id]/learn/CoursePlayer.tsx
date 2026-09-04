@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { MarkdownRenderer } from '../../../../components/MarkdownRenderer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -427,16 +428,22 @@ function AIPanelContent({ courseId, lectureId, courseTitle, lectureTitle }: { co
     setIsTyping(true);
     
     try {
-      const res = await fetch(`/api/ai/${courseId}`, {
+      const match = typeof document !== 'undefined' ? document.cookie.match(/(?:^|;\s*)token=([^;]+)/) : null;
+      const token = match ? decodeURIComponent(match[1]) : '';
+
+      const res = await fetch(`/api/ai/courses/${courseId}/query`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ question: q, lectureId })
       });
       const data = await res.json();
       
       setIsTyping(false);
       if (!res.ok) {
-        setMessages(prev => [...prev, { role: 'ai', text: `Sorry, I couldn't process that: ${data.error || 'Unknown error'}` }]);
+        setMessages(prev => [...prev, { role: 'ai', text: `Sorry, I couldn't process that: ${data.message || data.error || 'Unknown error'}` }]);
         return;
       }
       
@@ -471,12 +478,18 @@ function AIPanelContent({ courseId, lectureId, courseTitle, lectureTitle }: { co
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" /></svg>
               </div>
             )}
-            <div className={`max-w-[85%] p-3 text-[13px] sm:text-sm leading-relaxed shadow-sm ${
-              m.role === 'user'
-                ? 'rounded-[16px_4px_16px_16px] bg-gradient-to-br from-primary to-[#828fff] text-white shadow-[0_4px_12px_rgba(94,106,210,0.3)]'
-                : 'rounded-[4px_16px_16px_16px] bg-surface-3 text-ink-muted'
-            }`}>
-              {m.text}
+            <div
+              className={`leading-relaxed shadow-sm transition-all ${
+                m.role === 'user'
+                  ? 'max-w-[85%] p-3.5 text-[13px] sm:text-sm rounded-[16px_4px_16px_16px] bg-gradient-to-br from-primary to-[#828fff] text-white shadow-[0_4px_12px_rgba(94,106,210,0.3)]'
+                  : 'max-w-[92%] sm:max-w-[88%] p-4 rounded-[6px_18px_18px_18px] bg-surface-2/95 border border-hairline/80 text-ink shadow-[0_2px_12px_rgba(0,0,0,0.2)]'
+              }`}
+            >
+              {m.role === 'ai' ? (
+                <MarkdownRenderer content={m.text} />
+              ) : (
+                <div className="whitespace-pre-wrap">{m.text}</div>
+              )}
             </div>
           </div>
         ))}
@@ -740,12 +753,19 @@ export function CoursePlayer({ course, initialLectureId }: { course: Course; ini
 
           {/* Mobile-friendly Tabs */}
           <div className="bg-surface-1 border-b border-hairline flex overflow-x-auto shrink-0 scrollbar-hide hide-scrollbars">
-            {/* The 'curriculum' tab is only visible on mobile, since desktop has the sidebar */}
+            {/* The 'curriculum' and 'ai' tabs are only visible on mobile screens */}
             {(['curriculum', 'about', 'notes', 'resources', 'ai'] as const).map(tab => {
-              if (tab === 'curriculum' && window?.innerWidth >= 1024) return null; // hide on lg
-              if (tab === 'ai' && window?.innerWidth >= 1024) return null; // hide on lg (has floating panel)
+              const hideOnDesktop = tab === 'curriculum' || tab === 'ai';
               return (
-                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 sm:px-5 py-3 text-xs sm:text-[13px] capitalize whitespace-nowrap transition-colors border-b-2 ${activeTab === tab ? 'font-bold text-ink border-primary' : 'font-semibold text-ink-subtle border-transparent hover:text-ink-muted'}`}>
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`${hideOnDesktop ? 'lg:hidden' : ''} px-4 sm:px-5 py-3 text-xs sm:text-[13px] capitalize whitespace-nowrap transition-colors border-b-2 ${
+                    activeTab === tab
+                      ? 'font-bold text-ink border-primary'
+                      : 'font-semibold text-ink-subtle border-transparent hover:text-ink-muted'
+                  }`}
+                >
                   {tab === 'ai' ? 'AI Tutor' : tab}
                 </button>
               );

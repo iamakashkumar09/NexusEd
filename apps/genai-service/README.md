@@ -2,6 +2,15 @@
 
 > **Python + FastAPI** microservice providing RAG-based course Q&A and video transcript ingestion.
 
+cd apps\genai-service
+
+# Activate your virtual environment (assuming you created it as '.venv')
+.\.venv\Scripts\Activate.ps1
+
+# Start the GenAI Service (FastAPI + gRPC + RabbitMQ consumers)
+python main.py
+
+
 ---
 
 ## 📁 File Structure
